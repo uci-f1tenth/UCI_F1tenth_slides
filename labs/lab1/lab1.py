@@ -131,6 +131,7 @@ class Lab1(Slide):
 
         self.play(Write(title))
         self.play(Write(title2))
+        self.next_slide()
         self.play(FadeOut(title), FadeOut(title2))
 
         # Outline
@@ -147,6 +148,7 @@ class Lab1(Slide):
         )
         self.play(Write(outline_title))
         self.play(Write(outline))
+        self.next_slide()
         self.play(FadeOut(outline_title), FadeOut(outline))
 
         # What is PID?
@@ -167,6 +169,7 @@ class Lab1(Slide):
             .rotate(heading)
         )
 
+        self.next_slide()
         self.play(Transform(what_is_pid_title, line), FadeIn(car))
 
         follow_path = create_plotting_updater(
@@ -196,6 +199,7 @@ class Lab1(Slide):
         self.play(GrowArrow(arrow2))
         self.play(Write(output_text))
 
+        self.next_slide()
         self.play(
             FadeOut(arrow1),
             FadeOut(pid_box),
@@ -220,11 +224,13 @@ class Lab1(Slide):
         )
 
         self.play(TransformMatchingTex(error_text, error_eq))
+        self.next_slide()
         self.play(FadeOut(error_eq))
 
         # Another look at PID
         what_is_pid_title = TexText("Another look at PID")
         self.play(Write(what_is_pid_title))
+        self.next_slide()
 
         line_y = -3
         line_start_x = -5
@@ -271,6 +277,7 @@ class Lab1(Slide):
         )
         car.add_updater(follow_path)
         self.wait_until(lambda: follow_path not in car.updaters)
+        self.next_slide()
         self.play(
             FadeOut(car),
             FadeOut(what_is_pid_title),
@@ -282,6 +289,7 @@ class Lab1(Slide):
         # Implementing PID title
         implement_pid_title = TexText("Implementing PID")
         self.play(Write(implement_pid_title))
+        self.next_slide()
         self.play(FadeOut(implement_pid_title))
 
         # Implementing PID
@@ -289,6 +297,7 @@ class Lab1(Slide):
             r"u(t) = K_p e(t) + K_i \int_0^t e(\tau) d\tau + K_d \frac{de(t)}{dt}"
         ).scale(0.8)
         self.play(Write(pid_equation))
+        self.next_slide()
 
         pid_equation_colored = (
             Tex(
@@ -319,14 +328,17 @@ class Lab1(Slide):
             Write(pid_legend_group),
             TransformMatchingTex(pid_equation, pid_equation_colored),
         )
+        self.next_slide()
         self.play(
             FadeOut(pid_legend_group),
             FadeOut(pid_equation_colored),
         )
+        self.next_slide()
 
         # Breakdown of PID
         what_is_pid_title = TexText("Breakdown of PID")
         self.play(Write(what_is_pid_title))
+        self.next_slide()
 
         line_y = -3
         line_start_x = -5
@@ -385,6 +397,7 @@ class Lab1(Slide):
         )
         car.add_updater(follow_path)
         self.wait_until(lambda: follow_path not in car.updaters)
+        self.next_slide()
         self.play(
             FadeOut(car),
             FadeOut(what_is_pid_title),
@@ -396,6 +409,7 @@ class Lab1(Slide):
         # Wall following!
         wall_following_title = TexText("Wall following!")
         self.play(Write(wall_following_title))
+        self.next_slide()
         self.play(FadeOut(wall_following_title))
 
         num_rays = 36
@@ -430,7 +444,9 @@ class Lab1(Slide):
             rays.append(ray)
         self.play(Write(wall), FadeIn(car))
         self.play(*[GrowFromPoint(ray, car.get_center()) for ray in rays])
+        self.next_slide()
         self.play(*[FadeOut(ray) for ray in rays if ray not in rays_to_keep])
+        self.next_slide()
 
         line_a = rays_to_keep[1]
         line_b = rays_to_keep[0]
@@ -454,10 +470,12 @@ class Lab1(Slide):
             .set_color(GOLD)
         )
         self.play(Write(theta_arc), Write(theta_label))
+        self.next_slide()
         self.play(
             Write(a_label),
             Write(b_label),
         )
+        self.next_slide()
 
         drop = get_closest_point_on_line(
             line_b.get_start(),
@@ -470,6 +488,7 @@ class Lab1(Slide):
             GrowFromPoint(drop_line, line_a.get_end()),
             GrowFromPoint(drop_line2, line_b.get_end()),
         )
+        self.next_slide()
 
         alpha_arc = Arc(
             start_angle=-90 * DEGREES,
@@ -483,12 +502,14 @@ class Lab1(Slide):
             .set_color(BLUE)
         )
         self.play(Write(alpha_arc), Write(alpha_label))
+        self.next_slide()
 
         drop_2 = get_closest_point_on_line(
             wall.get_start(), wall.get_end(), car.get_center()
         )
         drop_line3 = Line(car.get_center(), drop_2).set_color(MAROON)
         self.play(GrowFromPoint(drop_line3, car.get_center()))
+        self.next_slide()
 
         alpha_arc_2 = Arc(
             start_angle=0 * DEGREES,
@@ -502,6 +523,7 @@ class Lab1(Slide):
             .set_color(BLUE)
         )
         self.play(Write(alpha_arc_2), Write(alpha_label_2))
+        self.next_slide()
 
         label_D = (
             TexText("D")
@@ -509,6 +531,7 @@ class Lab1(Slide):
             .set_color(GREEN)
         )
         self.play(Write(label_D))
+        self.next_slide()
 
         equation = (
             Tex("D", " = ", "b", r"\cos(\alpha)")
@@ -522,12 +545,14 @@ class Lab1(Slide):
             )
         )
         self.play(Write(equation))
+        self.next_slide()
         self.play(
             FadeOut(label_D),
             FadeOut(drop_line3),
             FadeOut(alpha_arc_2),
             FadeOut(alpha_label_2),
         )
+        self.next_slide()
 
         brace = Brace(
             VGroup(drop_line2, line_b),
@@ -546,6 +571,7 @@ class Lab1(Slide):
         )
         brace_group = VGroup(brace, brace_text)
         self.play(TransformFromCopy(line_a, brace_group))
+        self.next_slide()
 
         brace2 = Brace(
             drop_line2,
@@ -564,6 +590,7 @@ class Lab1(Slide):
         )
         brace_group2 = VGroup(brace2, brace_text2)
         self.play(TransformMatchingShapes(brace_group, brace_group2))
+        self.next_slide()
 
         brace3 = Brace(
             drop_line,
@@ -582,6 +609,7 @@ class Lab1(Slide):
         )
         brace_group3 = VGroup(brace3, brace_text3)
         self.play(TransformFromCopy(line_a, brace_group3))
+        self.next_slide()
 
         alpha_equation = Tex(
             r"\alpha",
@@ -595,6 +623,7 @@ class Lab1(Slide):
         alpha_equation[19].set_color(TEAL)
         alpha_equation[24].set_color(GOLD)
         self.play(Write(alpha_equation))
+        self.next_slide()
 
         self.play(
             FadeOut(brace_group2),
