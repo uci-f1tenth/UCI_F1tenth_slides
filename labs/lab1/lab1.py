@@ -223,7 +223,7 @@ class Lab1(Slide):
         self.play(FadeOut(error_eq))
 
         # Another look at PID
-        what_is_pid_title = TexText("Another look at pid")
+        what_is_pid_title = TexText("Another look at PID")
         self.play(Write(what_is_pid_title))
 
         line_y = -3
