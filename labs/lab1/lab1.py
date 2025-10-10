@@ -89,16 +89,17 @@ def create_plotting_updater(
         current_time = time_tracker.get_value()
         if plot_data is not None and axes is not None and segments is not None:
             for (key, color), value in zip(data, [e, omega, p, i, d]):
-                if key in plot_data and len(plot_data[key]) > 1:
+                if key in plot_data:
                     plot_data[key].append([current_time, value, 0])
-                    segment = Line(
-                        axes.coords_to_point(*plot_data[key][-2][:2]),
-                        axes.coords_to_point(*plot_data[key][-1][:2]),
-                        color=color,
-                        stroke_width=2,
-                    )
-                    segments.append(segment)
-                    scene.add(segment)
+                    if len(plot_data[key]) > 1:
+                        segment = Line(
+                            axes.coords_to_point(*plot_data[key][-2][:2]),
+                            axes.coords_to_point(*plot_data[key][-1][:2]),
+                            color=color,
+                            stroke_width=2,
+                        )
+                        segments.append(segment)
+                        scene.add(segment)
 
         mob.rotate(omega * dt)
         heading.increment_value(omega * dt)
@@ -124,6 +125,7 @@ def create_plotting_updater(
 
 class Lab1(Slide):
     def construct(self):
+        # Title
         title = TexText("F1tenth Lab 1:", font_size=100).shift(1 * UP)
         title2 = TexText("Wall Following")
 
@@ -131,6 +133,7 @@ class Lab1(Slide):
         self.play(Write(title2))
         self.play(FadeOut(title), FadeOut(title2))
 
+        # Outline
         outline_title = TexText("Outline:", font_size=100).shift(UP * 2)
         outline = (
             VGroup(
@@ -146,6 +149,7 @@ class Lab1(Slide):
         self.play(Write(outline))
         self.play(FadeOut(outline_title), FadeOut(outline))
 
+        # What is PID?
         what_is_pid_title = TexText("What is PID?")
         self.play(Write(what_is_pid_title))
 
@@ -177,6 +181,7 @@ class Lab1(Slide):
         self.wait_until(lambda: follow_path not in car.updaters)
         self.play(FadeOut(car), FadeOut(what_is_pid_title))
 
+        # PID block diagram
         error_text = Tex(r"\text{Error}").set_color(RED).shift(LEFT * 4)
         pid_box = Rectangle(width=2, height=1).shift(ORIGIN)
         pid_text = Tex(r"\text{PID}").move_to(pid_box.get_center())
@@ -198,6 +203,8 @@ class Lab1(Slide):
             FadeOut(arrow2),
             FadeOut(output_text),
         )
+
+        # Error equation
         error_eq = Tex(
             r"\text{Error}",
             " = ",
@@ -215,6 +222,7 @@ class Lab1(Slide):
         self.play(TransformMatchingTex(error_text, error_eq))
         self.play(FadeOut(error_eq))
 
+        # Another look at PID
         what_is_pid_title = TexText("Another look at pid")
         self.play(Write(what_is_pid_title))
 
@@ -271,10 +279,12 @@ class Lab1(Slide):
             FadeOut(legend_group),
         )
 
+        # Implementing PID title
         implement_pid_title = TexText("Implementing PID")
         self.play(Write(implement_pid_title))
         self.play(FadeOut(implement_pid_title))
 
+        # Implementing PID
         pid_equation = Tex(
             r"u(t) = K_p e(t) + K_i \int_0^t e(\tau) d\tau + K_d \frac{de(t)}{dt}"
         ).scale(0.8)
@@ -314,6 +324,7 @@ class Lab1(Slide):
             FadeOut(pid_equation_colored),
         )
 
+        # Breakdown of PID
         what_is_pid_title = TexText("Breakdown of PID")
         self.play(Write(what_is_pid_title))
 
