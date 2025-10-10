@@ -139,7 +139,7 @@ class Lab1(Slide):
         outline = (
             VGroup(
                 TexText("1. What is PID?"),
-                TexText("2. Implementing PID"),
+                TexText("2. Math behind PID"),
                 TexText("3. Geometric analysis of wall following"),
                 TexText("4. Wall following!"),
             )
@@ -285,19 +285,19 @@ class Lab1(Slide):
             *[FadeOut(segment) for segment in segments],
             FadeOut(legend_group),
         )
-        self.next_slide()
 
         # Implementing PID title
         implement_pid_title = TexText("Implementing PID")
         self.play(Write(implement_pid_title))
-        self.play(FadeOut(implement_pid_title))
         self.next_slide()
+        self.play(FadeOut(implement_pid_title))
 
         # Implementing PID
         pid_equation = Tex(
             r"u(t) = K_p e(t) + K_i \int_0^t e(\tau) d\tau + K_d \frac{de(t)}{dt}"
         ).scale(0.8)
         self.play(Write(pid_equation))
+        self.next_slide()
 
         pid_equation_colored = (
             Tex(
@@ -328,12 +328,10 @@ class Lab1(Slide):
             Write(pid_legend_group),
             TransformMatchingTex(pid_equation, pid_equation_colored),
         )
-        self.next_slide()
         self.play(
             FadeOut(pid_legend_group),
             FadeOut(pid_equation_colored),
         )
-        self.next_slide()
 
         # Breakdown of PID
         what_is_pid_title = TexText("Breakdown of PID")
