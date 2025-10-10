@@ -603,3 +603,6 @@ class Lab1(Slide):
             FadeOut(alpha_arc),
             FadeOut(alpha_label),
         )
+
+        the_end = TexText("The End!", font_size=100)
+        self.play(Write(the_end))
