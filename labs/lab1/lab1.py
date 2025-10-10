@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from manimlib import *
 
 from manim_slides import Slide
@@ -40,9 +40,91 @@ class PID:
         return u, self.kp * error, self.ki * self.integral, self.kd * derivative
 
 
+def create_legend(legend_data: List[Tuple[str, str]]) -> VGroup:
+    """Create a legend with given data: [(text, color), ...]"""
+    legend_items = []
+    for text, color in legend_data:
+        line = Line([0, 0, 0], [0.5, 0, 0], color=color, stroke_width=2)
+        text_obj = TexText(
+            text, font_size=20, color=color if color != "WHITE" else WHITE
+        ).next_to(line, RIGHT, buff=0.1)
+        legend_items.append(VGroup(line, text_obj))
+    return (
+        VGroup(*legend_items).arrange(DOWN, aligned_edge=LEFT).to_corner(UR, buff=0.5)
+    )
+
+
+def create_plotting_updater(
+    pid: PID,
+    heading: float,
+    acceleration: float,
+    max_speed: float,
+    line_y: float,
+    line_end_x: float,
+    axes: Optional[Axes] = None,
+    segments: Optional[list] = None,
+    scene: Optional[Scene] = None,
+    plot_data: Optional[dict] = None,
+) -> callable:
+    """Create car movement updater with plotting"""
+    heading: ValueTracker = ValueTracker(heading)
+    time_tracker: ValueTracker = ValueTracker(0)
+    speed: ValueTracker = ValueTracker(0)
+    data = [
+        ("error", RED),
+        ("steering", ORANGE),
+        ("proportional", YELLOW),
+        ("integral", BLUE),
+        ("derivative", PURPLE),
+    ]
+
+    def follow_path_with_plots(mob: Mobject, dt: float) -> None:
+        if not dt or dt <= 0:
+            return
+        x, y, _ = mob.get_center()
+
+        e: float = y - line_y
+        omega, p, i, d = pid.update(e, dt)
+
+        current_time = time_tracker.get_value()
+        if plot_data is not None and axes is not None and segments is not None:
+            for key, color, value in zip(data, [e, omega, p, i, d]):
+                if key in plot_data and len(plot_data[key]) > 1:
+                    plot_data[key].append([current_time, value, 0])
+                    segment = Line(
+                        axes.coords_to_point(*plot_data[key][-2][:2]),
+                        axes.coords_to_point(*plot_data[key][-1][:2]),
+                        color=color,
+                        stroke_width=2,
+                    )
+                    segments.append(segment)
+                    scene.add(segment)
+
+        mob.rotate(omega * dt)
+        heading.increment_value(omega * dt)
+        time_tracker.increment_value(dt)
+
+        current_speed = speed.get_value()
+        if current_speed < max_speed and x < line_end_x:
+            speed.increment_value(acceleration * dt)
+        elif current_speed > 0 and x >= line_end_x:
+            speed.increment_value(-acceleration * dt)
+        elif current_speed <= 0 and x >= line_end_x:
+            speed.set_value(0)
+            mob.remove_updater(follow_path_with_plots)
+
+        current_speed = speed.get_value()
+        current_heading = heading.get_value()
+        dx: float = current_speed * np.cos(current_heading) * dt
+        dy: float = current_speed * np.sin(current_heading) * dt
+        mob.move_to([x + dx, y + dy, 0])
+
+    return follow_path_with_plots
+
+
 class Lab1(Slide):
     def construct(self):
-        # title slide
+        # Title
         title = TexText("F1tenth Lab 1:", font_size=100).shift(1 * UP)
         title2 = TexText("Wall Following")
 
@@ -52,14 +134,14 @@ class Lab1(Slide):
 
         # Outline
         outline_title = TexText("Outline:", font_size=100).shift(UP * 2)
-        outline_1 = TexText("1. What is PID?")
-        outline_2 = TexText("2. Implementing PID")
-        outline_3 = TexText("3. Tuning PID")
-        outline_4 = TexText("4. Geometric analysis of wall following")
-        outline_5 = TexText("5. Wall following!")
-
         outline = (
-            VGroup(outline_1, outline_2, outline_3, outline_4, outline_5)
+            VGroup(
+                TexText("1. What is PID?"),
+                TexText("2. Implementing PID"),
+                TexText("3. Tuning PID"),
+                TexText("4. Geometric analysis of wall following"),
+                TexText("5. Wall following!"),
+            )
             .arrange(DOWN, aligned_edge=LEFT)
             .shift(DOWN)
         )
@@ -71,49 +153,30 @@ class Lab1(Slide):
         what_is_pid_title = TexText("What is PID?")
         self.play(Write(what_is_pid_title))
 
-        line_start = [-5, 0, 0]
-        line_length = 10
-        pid = PID(kp=2.0, ki=0.1, kd=2.0, setpoint=0.0, out_limits=(-2.0, 2.0))
-        speed = ValueTracker(0)
-        max_speed = 1.5
-        acceleration = 2
-        heading = ValueTracker(PI / 4)
-
-        line = Line(line_start, line_start + RIGHT * line_length)
-
-        self.play(Transform(what_is_pid_title, line))
-
+        line_y = 0
+        line_start_x = -5
+        line_end_x = 5
+        heading = PI / 4
+        line = Line(
+            line_y * UP + line_start_x * RIGHT, line_y * UP + line_end_x * RIGHT
+        )
         car = (
             ImageMobject("labs/lab1/car_topview.png")
             .scale(0.07)
-            .shift(line_start)
-            .rotate(heading.get_value())
+            .shift(line_y * UP + line_start_x * RIGHT)
+            .rotate(heading)
         )
 
-        self.play(FadeIn(car))
+        self.play(Transform(what_is_pid_title, line), FadeIn(car))
 
-        def follow_path(mob, dt):
-            if not dt or dt <= 0:
-                return
-            x, y, _ = mob.get_center()
-
-            e = y - line_start[1]
-            omega, _, _, _ = pid.update(e, dt)
-
-            new_theta = heading.get_value() + omega * dt
-            mob.rotate(new_theta - heading.get_value())
-            heading.set_value(new_theta)
-
-            if x < line_start[0] + line_length:
-                speed.set_value(min(speed.get_value() + acceleration * dt, max_speed))
-            else:
-                speed.set_value(max(speed.get_value() - acceleration * dt, 0))
-                if speed.get_value() <= 0:
-                    mob.remove_updater(follow_path)
-            dx = speed.get_value() * np.cos(new_theta) * dt
-            dy = speed.get_value() * np.sin(new_theta) * dt
-            mob.move_to([x + dx, y + dy, 0])
-
+        follow_path = create_plotting_updater(
+            pid=PID(kp=2.0, ki=0.1, kd=2.0, setpoint=0.0, out_limits=(-2.0, 2.0)),
+            heading=heading,
+            acceleration=2,
+            max_speed=1.5,
+            line_y=line_y,
+            line_end_x=line_end_x,
+        )
         car.add_updater(follow_path)
         self.wait_until(lambda: follow_path not in car.updaters)
         self.play(FadeOut(car), FadeOut(what_is_pid_title))
@@ -161,121 +224,57 @@ class Lab1(Slide):
         what_is_pid_title = TexText("Another look at pid")
         self.play(Write(what_is_pid_title))
 
-        line_start = [-5, -3, 0]
-        line_length = 10
-        pid = PID(kp=2.0, ki=0.1, kd=2.0, setpoint=0.0, out_limits=(-2.0, 2.0))
-        speed = ValueTracker(0)
-        max_speed = 1.5
-        acceleration = 2
-        heading = ValueTracker(PI / 4)
-        line = Line(line_start, line_start + RIGHT * line_length)
-
-        self.play(Transform(what_is_pid_title, line))
-
+        line_y = -3
+        line_start_x = -5
+        line_end_x = 5
+        heading = PI / 4
+        line = Line(
+            line_start_x * RIGHT + line_y * UP, line_end_x * RIGHT + line_y * UP
+        )
         axes = Axes(
             x_range=(0, 8),
             y_range=(-2, 2, 0.5),
             height=6,
             width=10,
         ).shift(UP * 0.5)
-
         axes.add_coordinate_labels(
             font_size=20,
             num_decimal_places=1,
         )
-
-        error_legend = Line([0, 0, 0], [0.5, 0, 0], color=RED, stroke_width=2)
-        error_label = TexText("Error", font_size=20, color=RED).next_to(
-            error_legend, RIGHT, buff=0.1
-        )
-
-        steering_legend = Line([0, 0, 0], [0.5, 0, 0], color=BLUE, stroke_width=2)
-        steering_label = TexText("Steering", font_size=20, color=BLUE).next_to(
-            steering_legend, RIGHT, buff=0.1
-        )
-
-        legend_group = (
-            VGroup(
-                VGroup(error_legend, error_label),
-                VGroup(steering_legend, steering_label),
-            )
-            .arrange(DOWN, aligned_edge=LEFT)
-            .to_corner(UR, buff=0.5)
-        )
-
-        self.play(Write(axes))
-        self.play(Write(legend_group))
-
-        time_tracker = ValueTracker(0)
-        error_points = []
-        steering_points = []
-        error_segments = []
-        steering_segments = []
-
+        legend_group = create_legend([("Error", RED), ("Steering", BLUE)])
         car = (
             ImageMobject("labs/lab1/car_topview.png")
             .scale(0.07)
-            .shift(line_start)
-            .rotate(heading.get_value())
+            .shift(line_start_x * RIGHT + line_y * UP)
+            .rotate(heading)
         )
+        segments = []
 
+        self.play(Transform(what_is_pid_title, line))
+        self.play(Write(axes))
+        self.play(Write(legend_group))
         self.play(FadeIn(car))
 
-        def follow_path(mob, dt):
-            if not dt or dt <= 0:
-                return
-            x, y, _ = mob.get_center()
-
-            e = y - line_start[1]
-            omega, _, _, _ = pid.update(e, dt)
-
-            time_tracker.set_value(time_tracker.get_value() + dt)
-            error_points.append([time_tracker.get_value(), e, 0])
-            steering_points.append([time_tracker.get_value(), omega, 0])
-
-            if len(error_points) > 1:
-                error_segment = Line(
-                    axes.coords_to_point(*error_points[-2][:2]),
-                    axes.coords_to_point(*error_points[-1][:2]),
-                    color=RED,
-                    stroke_width=2,
-                )
-                steering_segment = Line(
-                    axes.coords_to_point(*steering_points[-2][:2]),
-                    axes.coords_to_point(*steering_points[-1][:2]),
-                    color=BLUE,
-                    stroke_width=2,
-                )
-                error_segments.append(error_segment)
-                steering_segments.append(steering_segment)
-                self.add(error_segment, steering_segment)
-
-            new_theta = heading.get_value() + omega * dt
-            mob.rotate(new_theta - heading.get_value())
-            heading.set_value(new_theta)
-
-            if x < line_start[0] + line_length:
-                speed.set_value(min(speed.get_value() + acceleration * dt, max_speed))
-            else:
-                speed.set_value(max(speed.get_value() - acceleration * dt, 0))
-            if speed.get_value() <= 0:
-                mob.remove_updater(follow_path)
-            dx = speed.get_value() * np.cos(new_theta) * dt
-            dy = speed.get_value() * np.sin(new_theta) * dt
-            mob.move_to([x + dx, y + dy, 0])
-
+        follow_path = create_plotting_updater(
+            pid=PID(kp=2.0, ki=0.1, kd=2.0, setpoint=0.0, out_limits=(-2.0, 2.0)),
+            heading=heading,
+            acceleration=2,
+            max_speed=1.5,
+            line_y=line_y,
+            line_end_x=line_end_x,
+            axes=axes,
+            segments=segments,
+            scene=self,
+            plot_data={"error": [], "steering": []},
+        )
         car.add_updater(follow_path)
         self.wait_until(lambda: follow_path not in car.updaters)
         self.play(
             FadeOut(car),
             FadeOut(what_is_pid_title),
             FadeOut(axes),
-            *[FadeOut(segment) for segment in error_segments],
-            *[FadeOut(segment) for segment in steering_segments],
-            FadeOut(error_legend),
-            FadeOut(error_label),
-            FadeOut(steering_legend),
-            FadeOut(steering_label),
+            *[FadeOut(segment) for segment in segments],
+            FadeOut(legend_group),
         )
 
         # Implementing PID
