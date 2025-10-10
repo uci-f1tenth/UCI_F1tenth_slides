@@ -183,6 +183,7 @@ class Lab1(Slide):
         car.add_updater(follow_path)
         self.wait_until(lambda: follow_path not in car.updaters)
         self.play(FadeOut(car), FadeOut(what_is_pid_title))
+        self.next_slide()
 
         # PID block diagram
         error_text = Tex(r"\text{Error}").set_color(RED).shift(LEFT * 4)
@@ -199,7 +200,6 @@ class Lab1(Slide):
         self.play(GrowArrow(arrow2))
         self.play(Write(output_text))
 
-        self.next_slide()
         self.play(
             FadeOut(arrow1),
             FadeOut(pid_box),
@@ -207,6 +207,7 @@ class Lab1(Slide):
             FadeOut(arrow2),
             FadeOut(output_text),
         )
+        self.next_slide()
 
         # Error equation
         error_eq = Tex(
@@ -224,13 +225,12 @@ class Lab1(Slide):
         )
 
         self.play(TransformMatchingTex(error_text, error_eq))
-        self.next_slide()
         self.play(FadeOut(error_eq))
+        self.next_slide()
 
         # Another look at PID
         what_is_pid_title = TexText("Another look at PID")
         self.play(Write(what_is_pid_title))
-        self.next_slide()
 
         line_y = -3
         line_start_x = -5
@@ -259,6 +259,7 @@ class Lab1(Slide):
         segments = []
 
         self.play(Transform(what_is_pid_title, line))
+        self.next_slide()
         self.play(Write(axes))
         self.play(Write(legend_group))
         self.play(FadeIn(car))
@@ -277,7 +278,6 @@ class Lab1(Slide):
         )
         car.add_updater(follow_path)
         self.wait_until(lambda: follow_path not in car.updaters)
-        self.next_slide()
         self.play(
             FadeOut(car),
             FadeOut(what_is_pid_title),
@@ -285,19 +285,19 @@ class Lab1(Slide):
             *[FadeOut(segment) for segment in segments],
             FadeOut(legend_group),
         )
+        self.next_slide()
 
         # Implementing PID title
         implement_pid_title = TexText("Implementing PID")
         self.play(Write(implement_pid_title))
-        self.next_slide()
         self.play(FadeOut(implement_pid_title))
+        self.next_slide()
 
         # Implementing PID
         pid_equation = Tex(
             r"u(t) = K_p e(t) + K_i \int_0^t e(\tau) d\tau + K_d \frac{de(t)}{dt}"
         ).scale(0.8)
         self.play(Write(pid_equation))
-        self.next_slide()
 
         pid_equation_colored = (
             Tex(
@@ -338,7 +338,6 @@ class Lab1(Slide):
         # Breakdown of PID
         what_is_pid_title = TexText("Breakdown of PID")
         self.play(Write(what_is_pid_title))
-        self.next_slide()
 
         line_y = -3
         line_start_x = -5
@@ -374,6 +373,7 @@ class Lab1(Slide):
         segments = []
 
         self.play(Transform(what_is_pid_title, line))
+        self.next_slide()
         self.play(Write(axes))
         self.play(Write(legend_group))
         self.play(FadeIn(car))
@@ -397,7 +397,6 @@ class Lab1(Slide):
         )
         car.add_updater(follow_path)
         self.wait_until(lambda: follow_path not in car.updaters)
-        self.next_slide()
         self.play(
             FadeOut(car),
             FadeOut(what_is_pid_title),
@@ -405,12 +404,13 @@ class Lab1(Slide):
             *[FadeOut(segment) for segment in segments],
             FadeOut(legend_group),
         )
+        self.next_slide()
 
         # Wall following!
         wall_following_title = TexText("Wall following!")
         self.play(Write(wall_following_title))
-        self.next_slide()
         self.play(FadeOut(wall_following_title))
+        self.next_slide()
 
         num_rays = 36
         angle_range = 270 * DEGREES
@@ -444,7 +444,6 @@ class Lab1(Slide):
             rays.append(ray)
         self.play(Write(wall), FadeIn(car))
         self.play(*[GrowFromPoint(ray, car.get_center()) for ray in rays])
-        self.next_slide()
         self.play(*[FadeOut(ray) for ray in rays if ray not in rays_to_keep])
         self.next_slide()
 
@@ -545,7 +544,6 @@ class Lab1(Slide):
             )
         )
         self.play(Write(equation))
-        self.next_slide()
         self.play(
             FadeOut(label_D),
             FadeOut(drop_line3),
@@ -643,6 +641,7 @@ class Lab1(Slide):
             FadeOut(alpha_arc),
             FadeOut(alpha_label),
         )
+        self.next_slide()
 
         the_end = TexText("The End!", font_size=100)
         self.play(Write(the_end))
