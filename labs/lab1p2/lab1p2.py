@@ -18,7 +18,7 @@ class Lab1p2(Scene):
             VGroup(
                 TexText("1. Implementing PID"),
                 TexText("2. Implementing Wall Following"),
-                TexText("4. Competition!"),
+                TexText("3. Competition!"),
             )
             .arrange(DOWN, aligned_edge=LEFT)
             .shift(DOWN)
@@ -63,7 +63,7 @@ class Lab1p2(Scene):
         )
         f_always(dot1.move_to, lambda: axes.i2gp(x_tracker.get_value(), graph))
         self.play(FadeIn(dot1), ShowCreation(rectangles))
-        self.play(x_tracker.animate.set_value(9), run_time=5)
+        self.play(x_tracker.animate.set_value(5), run_time=5)
         self.wait()
         self.play(
             FadeOut(axes),
@@ -195,10 +195,12 @@ class Lab1p2(Scene):
             return error"""
         )
         self.play(
-            FadeOut(D_equation), Transform(alpha_equation, full_wall_following_code)
+            FadeOut(D_equation),
+            FadeOut(alpha_equation),
+            FadeIn(full_wall_following_code),
         )
         self.wait()
-        self.play(FadeOut(alpha_equation))
+        self.play(FadeOut(full_wall_following_code))
 
         # Competition
         title = TexText("Competition!")
