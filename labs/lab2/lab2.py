@@ -434,3 +434,123 @@ class Lab2(Scene):
         rays_group.remove_updater(rays_updater_instance)
         self.wait()
         self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
+
+        # How many rays do we cut?
+        title = TexText("How many rays do we cut?")
+        self.play(Write(title))
+        self.wait()
+        self.play(FadeOut(title))
+
+        rays = [
+            Line(
+                BOTTOM + LEFT_SIDE,
+                BOTTOM
+                + LEFT_SIDE
+                + np.cos(angle)
+                * RIGHT
+                * ((8 if i >= 6 else 4) + (rand_offset := np.random.uniform(-0.5, 0.5)))
+                + np.sin(angle) * UP * ((8 if i >= 6 else 4) + rand_offset),
+                stroke_width=2,
+                color=RED,
+            )
+            for i, angle in enumerate(np.linspace(0, np.pi / 2, 15))
+        ]
+        rays_group = VGroup(*rays)
+        small_arc = Arc(
+            start_angle=5 * np.pi / 28,
+            angle=np.pi / 12,
+            radius=rays[5].get_length(),
+            stroke_width=4,
+            color=BLUE,
+        ).shift(BOTTOM + LEFT_SIDE)
+        disparity_text = Text("disparity point", font_size=24)
+        disparity_text.next_to(small_arc.get_start(), DOWN * 2 + RIGHT, buff=0.2)
+        arrow = Arrow(
+            disparity_text.get_top() + UP * 0.1,
+            small_arc.get_start(),
+            buff=0.1,
+            stroke_width=2,
+            color=WHITE,
+        )
+        disparity_extent_line = Line(
+            [0, 0, 0], [0.75, 0, 0], color=BLUE, stroke_width=4
+        )
+        disparity_extent_text = TexText("disparity extent", font_size=30).next_to(
+            disparity_extent_line, RIGHT, buff=0.1
+        )
+        disparity_extent_legend = VGroup(
+            disparity_extent_line, disparity_extent_text
+        ).to_corner(UR, buff=0.5)
+        large_arc = Arc(
+            start_angle=0,
+            angle=np.pi / 2,
+            radius=rays[5].get_length() - 0.1,
+            stroke_width=2,
+            color=ORANGE,
+        ).shift(BOTTOM + LEFT_SIDE)
+        large_arc_line = Line([0, 0, 0], [0.75, 0, 0], color=ORANGE, stroke_width=4)
+        large_arc_legend = TexText("full arc", font_size=30).next_to(
+            large_arc_line, RIGHT, buff=0.1
+        )
+        large_arc_legend_group = VGroup(large_arc_line, large_arc_legend).next_to(
+            disparity_extent_legend, DOWN, buff=0.2
+        )
+        disparity_percent = (
+            Tex(
+                "\\text{Disparity}\\%=\\frac{\\text{Disparity Extent}}{\\text{Full Arc}}",
+                font_size=30,
+                tex_to_color_map={"Disparity Extent": BLUE, "Full Arc": ORANGE},
+            )
+            .next_to(large_arc_legend_group, DOWN, buff=0.2)
+            .shift(LEFT * 0.5)
+        )
+        disparity_percent2 = (
+            Tex(
+                "\\text{Disparity}\\%=\\frac{\\text{Disparity Extent}}{\\text{Radius}*\\theta}",
+                font_size=30,
+                tex_to_color_map={"Disparity Extent": BLUE},
+            )
+            .next_to(large_arc_legend_group, DOWN, buff=0.2)
+            .shift(LEFT * 0.5)
+        )
+        disparity_percent3 = (
+            Tex(
+                "\\text{Disparity Index}=\\frac{\\text{Disparity Extent}*Rays}{\\text{Disparity Distance}*\\theta}",
+                font_size=30,
+                tex_to_color_map={"Disparity Extent": BLUE},
+            )
+            .next_to(large_arc_legend_group, DOWN, buff=0.2)
+            .shift(LEFT * 1)
+        )
+
+        self.play(Write(rays_group))
+        self.wait()
+
+        self.play(Write(disparity_text), GrowArrow(arrow))
+        self.wait()
+
+        self.play(Write(small_arc), Write(disparity_extent_legend))
+        self.wait()
+
+        self.play(Write(large_arc), Write(large_arc_legend_group))
+        self.wait()
+
+        self.play(Write(disparity_percent))
+        self.wait()
+
+        self.play(TransformMatchingTex(disparity_percent, disparity_percent2))
+        self.wait()
+
+        self.play(TransformMatchingTex(disparity_percent2, disparity_percent3))
+        self.wait()
+
+        self.play(
+            FadeOut(rays_group),
+            FadeOut(small_arc),
+            FadeOut(disparity_text),
+            FadeOut(arrow),
+            FadeOut(disparity_extent_legend),
+            FadeOut(large_arc),
+            FadeOut(large_arc_legend_group),
+            FadeOut(disparity_percent3),
+        )

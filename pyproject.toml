@@ -1,0 +1,18 @@
+[project]
+name = "uci-f1tenth-slides"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["manimgl", "pyopengl-accelerate>=3.1.10", "setuptools>=80.9.0"]
+
+[tool.ruff.lint]
+per-file-ignores = { "labs/lab1/lab1.py" = [
+    "F403",
+    "F405",
+], "labs/lab2/lab2.py" = [
+    "F403",
+    "F405",
+] }
+
+[tool.uv.sources]
+manimgl = { git = "https://github.com/AlistairKeiller/manim" }
