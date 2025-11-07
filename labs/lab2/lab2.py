@@ -59,9 +59,9 @@ def ray_updater(
     is_outside,
     max_ray_length=20,
     dx=0.1,
-    binary_search_iterations=5,
+    binary_search_iterations=10,
     use_disparity_extender=False,
-    threshold: float = 0.5,
+    threshold: float = 2.0,
     bubble_size: float = 0.3,
 ):
     def update_rays(mob: Mobject, dt: float):
@@ -367,6 +367,61 @@ class Lab2(Scene):
             Write(obstacles),
         )
         rays_group.add_updater(rays_updater_instance)
+        self.wait()
+        car_updater_instance = car_updater(car_velocity, car_angle, rays)
+
+        car.add_updater(car_updater_instance)
+        self.wait_until(
+            lambda: sum(is_outside_track(corner) for corner in car.get_points()) >= 2,
+            max_time=10,
+        )
+        car.remove_updater(car_updater_instance)
+        rays_group.remove_updater(rays_updater_instance)
+        self.wait()
+        self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
+
+        # Visualize Naive Approach On Track
+        car = (
+            ImageMobject("labs/lab1/car_topview.png")
+            .scale(0.1)
+            .rotate(PI / 2)
+            .shift(LEFT * 2.5 + DOWN)
+        )
+        car_velocity = ValueTracker(0)
+        car_angle = ValueTracker(np.pi / 2)
+
+        track_outer = Ellipse(width=6, height=8, stroke_color=WHITE, stroke_width=4)
+        track_inner = Ellipse(width=3, height=5, stroke_color=WHITE, stroke_width=4)
+        obstacles = VGroup(track_outer, track_inner)
+        is_outside_track = get_is_in(
+            (track_inner, ObstacleType.POSITIVE_SPACE),
+            (track_outer, ObstacleType.NEGATIVE_SPACE),
+        )
+
+        rays = [
+            Line(
+                car.get_center(),
+                car.get_center(),
+                stroke_width=0.5,
+                color=RED,
+            )
+            for _ in range(60)
+        ]
+        rays_group = VGroup(*rays)
+        rays_updater_instance = ray_updater(
+            car,
+            car_angle,
+            rays,
+            is_outside_track,
+            use_disparity_extender=True,
+        )
+        rays_group.add_updater(rays_updater_instance)
+
+        self.play(
+            FadeIn(car),
+            FadeIn(rays_group),
+            Write(obstacles),
+        )
         self.wait()
         car_updater_instance = car_updater(car_velocity, car_angle, rays)
 
