@@ -158,7 +158,7 @@ def car_updater(
             for ray in rays[best_index : best_index + window_size]:
                 ray.set_color(YELLOW)
             max_ray = rays[best_index + window_size // 2]
-            max_ray.set_color(ORANGE)
+            max_ray.set_color(BLUE)
             target_angle = max_ray.get_angle()
         else:
             max_ray = max(rays, key=lambda ray: ray.get_length())
@@ -341,21 +341,11 @@ class Lab2(Scene):
             "2. Find the farthest ray\\\\",
             "3. Drive towards the farthest ray",
         )
+
         self.play(TransformMatchingTex(title2, title3))
         self.wait()
-        title4 = TexText(
-            "$\\text{Disparities:}$\\\\",
-            "$\\left|\\frac{d}{d \\theta}\\text{ray\\_length}\\right|>\\text{threshold}$",
-        )
-        self.play(TransformMatchingTex(title3, title4))
-        self.wait()
-        title5 = TexText(
-            "$\\text{Disparities:}$\\\\",
-            "$abs(ray\\_lengths[i+1]-ray\\_lengths[i])->\\text{threshold}$",
-        )
-        self.play(TransformMatchingTex(title4, title5))
-        self.wait()
-        self.play(FadeOut(title5))
+
+        self.play(FadeOut(title3))
 
         # Visualize Disparity Extender With Obstacles
         car = (
@@ -472,6 +462,29 @@ class Lab2(Scene):
         self.wait()
         self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
 
+        # What is a Disparity?
+        title = TexText("What is a Disparity?")
+        self.play(Write(title))
+        self.wait()
+        title2 = TexText(
+            "Disparity:\\\\", "A large change in ray length between adjacent rays"
+        )
+        self.play(TransformMatchingTex(title, title2))
+        self.wait()
+        title3 = TexText(
+            "$\\text{Disparities:}$\\\\",
+            "$\\left|\\frac{d}{d \\theta}\\text{ray\\_length}\\right|>\\text{threshold}$",
+        )
+        self.play(TransformMatchingTex(title2, title3))
+        self.wait()
+        title4 = TexText(
+            "$\\text{Disparities:}$\\\\",
+            "$\\text{abs}(\\text{ray\\_lengths}[i+1]-\\text{ray\\_lengths}[i])>\\text{threshold}$",
+        )
+        self.play(TransformMatchingTex(title3, title4))
+        self.wait()
+        self.play(FadeOut(title4))
+
         # How many rays do we cut?
         title = TexText("How many rays do we cut?")
         self.play(Write(title))
@@ -495,7 +508,7 @@ class Lab2(Scene):
         rays_group = VGroup(*rays)
         small_arc = Arc(
             start_angle=5 * np.pi / 28,
-            angle=np.pi / 12,
+            angle=5.3 * np.pi / 28,
             radius=rays[5].get_length(),
             stroke_width=4,
             color=BLUE,
@@ -532,6 +545,11 @@ class Lab2(Scene):
         large_arc_legend_group = VGroup(large_arc_line, large_arc_legend).next_to(
             disparity_extent_legend, DOWN, buff=0.2
         )
+        disparity = Tex(
+            "\\text{Disparity Extent}\\approx\\text{Car Width}",
+            font_size=35,
+            tex_to_color_map={"Disparity Extent": BLUE},
+        ).shift(RIGHT * 3 + UP)
         disparity_percent = Tex(
             "\\text{Disparity}\\%=\\frac{\\text{Disparity Extent}}{\\text{Full Arc}}",
             font_size=35,
@@ -543,10 +561,15 @@ class Lab2(Scene):
             tex_to_color_map={"Disparity Extent": BLUE},
         ).shift(RIGHT * 3)
         disparity_percent3 = Tex(
-            "\\text{Disparity Index}=\\frac{\\text{Disparity Extent}*NumRays}{\\text{Disparity Distance}*\\theta}",
+            "\\text{Disparity Index}=\\text{Disparity}\\%*\\text{NumRays}",
             font_size=35,
             tex_to_color_map={"Disparity Extent": BLUE},
-        ).shift(RIGHT * 2.5)
+        ).shift(RIGHT * 2.5 + DOWN)
+        disparity_percent4 = Tex(
+            "\\text{Disparity Index}=\\frac{\\text{Disparity Extent}*\\text{NumRays}}{\\text{Disparity Distance}*\\theta}",
+            font_size=35,
+            tex_to_color_map={"Disparity Extent": BLUE},
+        ).shift(RIGHT * 2.5 + DOWN)
 
         self.play(Write(rays_group))
         self.wait()
@@ -560,13 +583,19 @@ class Lab2(Scene):
         self.play(Write(large_arc), Write(large_arc_legend_group))
         self.wait()
 
+        self.play(Write(disparity))
+        self.wait()
+
         self.play(Write(disparity_percent))
         self.wait()
 
         self.play(TransformMatchingTex(disparity_percent, disparity_percent2))
         self.wait()
 
-        self.play(TransformMatchingTex(disparity_percent2, disparity_percent3))
+        self.play(Write(disparity_percent3))
+        self.wait()
+
+        self.play(TransformMatchingTex(disparity_percent3, disparity_percent4))
         self.wait()
 
         self.play(
@@ -577,7 +606,9 @@ class Lab2(Scene):
             FadeOut(disparity_extent_legend),
             FadeOut(large_arc),
             FadeOut(large_arc_legend_group),
-            FadeOut(disparity_percent3),
+            FadeOut(disparity),
+            FadeOut(disparity_percent2),
+            FadeOut(disparity_percent4),
         )
 
         # Window Approach
@@ -711,3 +742,7 @@ class Lab2(Scene):
         rays_group.remove_updater(rays_updater_instance)
         self.wait()
         self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
+
+        # conclusion
+        title = TexText("Thanks for Listening!")
+        self.play(Write(title))
