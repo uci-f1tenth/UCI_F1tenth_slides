@@ -495,33 +495,21 @@ class Lab2(Scene):
         large_arc_legend_group = VGroup(large_arc_line, large_arc_legend).next_to(
             disparity_extent_legend, DOWN, buff=0.2
         )
-        disparity_percent = (
-            Tex(
-                "\\text{Disparity}\\%=\\frac{\\text{Disparity Extent}}{\\text{Full Arc}}",
-                font_size=30,
-                tex_to_color_map={"Disparity Extent": BLUE, "Full Arc": ORANGE},
-            )
-            .next_to(large_arc_legend_group, DOWN, buff=0.2)
-            .shift(LEFT * 0.5)
-        )
-        disparity_percent2 = (
-            Tex(
-                "\\text{Disparity}\\%=\\frac{\\text{Disparity Extent}}{\\text{Radius}*\\theta}",
-                font_size=30,
-                tex_to_color_map={"Disparity Extent": BLUE},
-            )
-            .next_to(large_arc_legend_group, DOWN, buff=0.2)
-            .shift(LEFT * 0.5)
-        )
-        disparity_percent3 = (
-            Tex(
-                "\\text{Disparity Index}=\\frac{\\text{Disparity Extent}*Rays}{\\text{Disparity Distance}*\\theta}",
-                font_size=30,
-                tex_to_color_map={"Disparity Extent": BLUE},
-            )
-            .next_to(large_arc_legend_group, DOWN, buff=0.2)
-            .shift(LEFT * 1)
-        )
+        disparity_percent = Tex(
+            "\\text{Disparity}\\%=\\frac{\\text{Disparity Extent}}{\\text{Full Arc}}",
+            font_size=35,
+            tex_to_color_map={"Disparity Extent": BLUE, "Full Arc": ORANGE},
+        ).shift(RIGHT * 3)
+        disparity_percent2 = Tex(
+            "\\text{Disparity}\\%=\\frac{\\text{Disparity Extent}}{\\text{Radius}*\\theta}",
+            font_size=35,
+            tex_to_color_map={"Disparity Extent": BLUE},
+        ).shift(RIGHT * 3)
+        disparity_percent3 = Tex(
+            "\\text{Disparity Index}=\\frac{\\text{Disparity Extent}*NumRays}{\\text{Disparity Distance}*\\theta}",
+            font_size=35,
+            tex_to_color_map={"Disparity Extent": BLUE},
+        ).shift(RIGHT * 2.5)
 
         self.play(Write(rays_group))
         self.wait()
