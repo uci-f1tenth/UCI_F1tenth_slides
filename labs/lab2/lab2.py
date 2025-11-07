@@ -128,6 +128,8 @@ def car_updater(
     car_velocity: ValueTracker,
     car_angle: ValueTracker,
     rays: list[Line],
+    window_approach: bool = False,
+    window_size: int = 13,
 ):
     previous_max_ray = None
 
@@ -136,12 +138,36 @@ def car_updater(
         if car_velocity.get_value() < 1:
             car_velocity.set_value(car_velocity.get_value() + dt)
 
-        max_ray = max(rays, key=lambda ray: ray.get_length())
-        if previous_max_ray is not None:
-            previous_max_ray.set_color(RED)
-        previous_max_ray = max_ray
-        max_ray.set_color(YELLOW)
-        target_angle = max_ray.get_angle()
+        if window_approach:
+            lidar_range_array = np.array([ray.get_length() for ray in rays])
+            best_index = 0
+            best_min_distance = 0.0
+
+            for i in range(len(lidar_range_array) - window_size + 1):
+                window = lidar_range_array[i : i + window_size]
+                min_distance = np.min(window)
+
+                if min_distance > best_min_distance:
+                    best_min_distance = min_distance
+                    best_index = i
+
+            if previous_max_ray is not None:
+                for ray in previous_max_ray:
+                    ray.set_color(RED)
+            previous_max_ray = rays[best_index : best_index + window_size]
+            for ray in rays[best_index : best_index + window_size]:
+                ray.set_color(YELLOW)
+            max_ray = rays[best_index + window_size // 2]
+            max_ray.set_color(ORANGE)
+            target_angle = max_ray.get_angle()
+        else:
+            max_ray = max(rays, key=lambda ray: ray.get_length())
+            if previous_max_ray is not None:
+                previous_max_ray.set_color(RED)
+            previous_max_ray = max_ray
+            max_ray.set_color(YELLOW)
+            target_angle = max_ray.get_angle()
+
         rotation = np.clip(
             0.1 * (target_angle - car_angle.get_value()), -2 * dt, 2 * dt
         )
@@ -166,6 +192,17 @@ class Lab2(Scene):
         self.play(Write(title2))
         self.wait()
         self.play(FadeOut(title), FadeOut(title2))
+
+        # Outline
+        outline = TexText(
+            "Outline:\\\\",
+            "1. Naive Approach\\\\",
+            "2. Disparity Extender\\\\",
+            "3. Best Window",
+        )
+        self.play(Write(outline))
+        self.wait()
+        self.play(FadeOut(outline))
 
         # Naive Approach
         title = TexText("Naive Approach")
@@ -380,7 +417,7 @@ class Lab2(Scene):
         self.wait()
         self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
 
-        # Visualize Naive Approach On Track
+        # Visualize Disparity Extender On Track
         car = (
             ImageMobject("labs/lab1/car_topview.png")
             .scale(0.1)
@@ -542,3 +579,135 @@ class Lab2(Scene):
             FadeOut(large_arc_legend_group),
             FadeOut(disparity_percent3),
         )
+
+        # Window Approach
+        title = TexText("Window Approach")
+        self.play(Write(title))
+        self.wait()
+
+        title2 = TexText(
+            "Window Approach:\\\\",
+            "1. Calculate the value for each window of n rays\\\\",
+            "2. Drive towards the center of the best window",
+        )
+        self.play(TransformMatchingTex(title, title2))
+        self.wait()
+
+        title3 = Tex(
+            "\\text{Window Value} = \\min(\\text{ray lengths in window})"
+        ).shift(DOWN * 2)
+        self.play(Write(title3))
+        self.wait()
+
+        self.play(FadeOut(title3), FadeOut(title2))
+
+        # Visualize Window Approach With Obstacles
+        car = (
+            ImageMobject("labs/lab1/car_topview.png").scale(0.1).shift(LEFT * 4 + DOWN)
+        ).rotate(np.pi / 4)
+        self.add(car)
+        car_velocity = ValueTracker(0)
+        car_angle = ValueTracker(np.pi / 4)
+
+        bounding_rectangle = Rectangle(width=12, height=6)
+        obstacle_1 = Circle(radius=1, stroke_color=WHITE, stroke_width=4).shift(
+            RIGHT * 2 + UP * 2
+        )
+        obstacle_2 = Circle(radius=1.5, stroke_color=WHITE, stroke_width=4).shift(
+            DOWN * 1.5
+        )
+
+        obstacle_3 = Circle(radius=1, stroke_color=WHITE, stroke_width=4).shift(
+            LEFT * 2 + UP * 0.5
+        )
+        obstacles = VGroup(bounding_rectangle, obstacle_1, obstacle_2, obstacle_3)
+        is_outside_track = get_is_in(
+            (obstacle_1, ObstacleType.POSITIVE_SPACE),
+            (obstacle_2, ObstacleType.POSITIVE_SPACE),
+            (obstacle_3, ObstacleType.POSITIVE_SPACE),
+            (bounding_rectangle, ObstacleType.NEGATIVE_SPACE),
+        )
+
+        rays = [
+            Line(
+                car.get_center(),
+                car.get_center(),
+                stroke_width=0.5,
+                color=RED,
+            )
+            for _ in range(60)
+        ]
+        rays_group = VGroup(*rays)
+        rays_updater_instance = ray_updater(car, car_angle, rays, is_outside_track)
+
+        self.play(
+            FadeIn(car),
+            FadeIn(rays_group),
+            Write(obstacles),
+        )
+        rays_group.add_updater(rays_updater_instance)
+        self.wait()
+        car_updater_instance = car_updater(
+            car_velocity, car_angle, rays, window_approach=True
+        )
+
+        car.add_updater(car_updater_instance)
+        self.wait_until(
+            lambda: sum(is_outside_track(corner) for corner in car.get_points()) >= 1,
+            max_time=10,
+        )
+        car.remove_updater(car_updater_instance)
+        rays_group.remove_updater(rays_updater_instance)
+        self.wait()
+        self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
+
+        # Visualize Window Approach On Track
+        car = (
+            ImageMobject("labs/lab1/car_topview.png")
+            .scale(0.1)
+            .rotate(PI / 2)
+            .shift(LEFT * 2.5 + DOWN)
+        )
+        car_velocity = ValueTracker(0)
+        car_angle = ValueTracker(np.pi / 2)
+
+        track_outer = Ellipse(width=6, height=8, stroke_color=WHITE, stroke_width=4)
+        track_inner = Ellipse(width=3, height=5, stroke_color=WHITE, stroke_width=4)
+        obstacles = VGroup(track_outer, track_inner)
+        is_outside_track = get_is_in(
+            (track_inner, ObstacleType.POSITIVE_SPACE),
+            (track_outer, ObstacleType.NEGATIVE_SPACE),
+        )
+
+        rays = [
+            Line(
+                car.get_center(),
+                car.get_center(),
+                stroke_width=0.5,
+                color=RED,
+            )
+            for _ in range(60)
+        ]
+        rays_group = VGroup(*rays)
+        rays_updater_instance = ray_updater(car, car_angle, rays, is_outside_track)
+        rays_group.add_updater(rays_updater_instance)
+
+        self.play(
+            FadeIn(car),
+            FadeIn(rays_group),
+            Write(obstacles),
+        )
+        self.wait()
+        car_updater_instance = car_updater(
+            car_velocity, car_angle, rays, window_approach=True
+        )
+
+        car.add_updater(car_updater_instance)
+        self.wait_until(
+            lambda: sum(is_outside_track(corner) for corner in car.get_points()) >= 1,
+            max_time=10,
+        )
+        car.remove_updater(car_updater_instance)
+        rays_group.remove_updater(rays_updater_instance)
+        self.wait()
+        self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
