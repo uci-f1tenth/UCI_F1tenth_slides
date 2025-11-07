@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "manimgl",
+    "manim-slides",
     "pyopengl-accelerate>=3.1.10",
     "setuptools>=80.9.0",
 ]
@@ -15,3 +16,4 @@ per-file-ignores = { "labs/lab1/lab1.py" = ["F403", "F405"] }
 
 [tool.uv.sources]
 manimgl = { git = "https://github.com/3b1b/manim" }
+manim-slides = { git = "https://github.com/jeertmans/manim-slides" }

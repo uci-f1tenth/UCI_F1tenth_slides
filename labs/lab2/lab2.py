@@ -1,5 +1,6 @@
 from enum import Enum
 from manimlib import *
+from manim_slides import Slide
 
 
 class ObstacleType(Enum):
@@ -156,7 +157,7 @@ def car_updater(
     return update_car
 
 
-class Lab2(Scene):
+class Lab2(Slide):
     def construct(self):
         # Title
         title = TexText("F1tenth Lab 2:").shift(1 * UP)
@@ -164,20 +165,20 @@ class Lab2(Scene):
 
         self.play(Write(title))
         self.play(Write(title2))
-        self.wait()
+        self.next_slide()
         self.play(FadeOut(title), FadeOut(title2))
 
         # Naive Approach
         title = TexText("Naive Approach")
         self.play(Write(title))
-        self.wait()
+        self.next_slide()
         title2 = TexText(
             "Naive Approach:\\\\",
             "1. Find the farthest ray\\\\",
             "2. Drive towards the farthest ray",
         )
         self.play(TransformMatchingTex(title, title2))
-        self.wait()
+        self.next_slide()
         self.play(FadeOut(title2))
 
         # Visualize Naive Approach With Obstacles
@@ -225,17 +226,17 @@ class Lab2(Scene):
             Write(obstacles),
         )
         rays_group.add_updater(rays_updater_instance)
-        self.wait()
+        self.next_slide()
         car_updater_instance = car_updater(car_velocity, car_angle, rays)
 
         car.add_updater(car_updater_instance)
         self.wait_until(
-            lambda: sum(is_outside_track(corner) for corner in car.get_points()) >= 2,
+            lambda: sum(is_outside_track(corner) for corner in car.get_points()) >= 1,
             max_time=10,
         )
         car.remove_updater(car_updater_instance)
         rays_group.remove_updater(rays_updater_instance)
-        self.wait()
+        self.next_slide()
         self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
 
         # Visualize Naive Approach On Track
@@ -274,7 +275,7 @@ class Lab2(Scene):
             FadeIn(rays_group),
             Write(obstacles),
         )
-        self.wait()
+        self.next_slide()
         car_updater_instance = car_updater(car_velocity, car_angle, rays)
 
         car.add_updater(car_updater_instance)
@@ -284,20 +285,20 @@ class Lab2(Scene):
         )
         car.remove_updater(car_updater_instance)
         rays_group.remove_updater(rays_updater_instance)
-        self.wait()
+        self.next_slide()
         self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
 
         # Disparity Extender
         title = TexText("Disparity Extender")
         self.play(Write(title))
-        self.wait()
+        self.next_slide()
         title2 = TexText(
             "Naive Approach:\\\\",
             "1. Find the farthest ray\\\\",
             "2. Drive towards the farthest ray",
         )
         self.play(TransformMatchingTex(title, title2))
-        self.wait()
+        self.next_slide()
         title3 = TexText(
             "Disparity Extender:\\\\",
             "1. Extend large disparities\\\\",
@@ -305,19 +306,19 @@ class Lab2(Scene):
             "3. Drive towards the farthest ray",
         )
         self.play(TransformMatchingTex(title2, title3))
-        self.wait()
+        self.next_slide()
         title4 = TexText(
             "$\\text{Disparities:}$\\\\",
             "$\\left|\\frac{d}{d \\theta}\\text{ray\\_length}\\right|>\\text{threshold}$",
         )
         self.play(TransformMatchingTex(title3, title4))
-        self.wait()
+        self.next_slide()
         title5 = TexText(
             "$\\text{Disparities:}$\\\\",
-            "$abs(ray\_lengths[i+1]-ray\_lengths[i])->\\text{threshold}$",
+            "$abs(ray\\_lengths[i+1]-ray\\_lengths[i])->\\text{threshold}$",
         )
         self.play(TransformMatchingTex(title4, title5))
-        self.wait()
+        self.next_slide()
         self.play(FadeOut(title5))
 
         # Visualize Disparity Extender With Obstacles
@@ -367,7 +368,7 @@ class Lab2(Scene):
             Write(obstacles),
         )
         rays_group.add_updater(rays_updater_instance)
-        self.wait()
+        self.next_slide()
         car_updater_instance = car_updater(car_velocity, car_angle, rays)
 
         car.add_updater(car_updater_instance)
@@ -377,7 +378,7 @@ class Lab2(Scene):
         )
         car.remove_updater(car_updater_instance)
         rays_group.remove_updater(rays_updater_instance)
-        self.wait()
+        self.next_slide()
         self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
 
         # Visualize Naive Approach On Track
@@ -422,7 +423,7 @@ class Lab2(Scene):
             FadeIn(rays_group),
             Write(obstacles),
         )
-        self.wait()
+        self.next_slide()
         car_updater_instance = car_updater(car_velocity, car_angle, rays)
 
         car.add_updater(car_updater_instance)
@@ -432,5 +433,5 @@ class Lab2(Scene):
         )
         car.remove_updater(car_updater_instance)
         rays_group.remove_updater(rays_updater_instance)
-        self.wait()
+        self.next_slide()
         self.play(FadeOut(car), FadeOut(rays_group), FadeOut(obstacles))
