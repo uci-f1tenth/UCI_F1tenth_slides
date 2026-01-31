@@ -45,7 +45,9 @@ $ #image("lil_guy.png", height: 70%) $
 == Idea of Pose Graph-based SLAM pt 2
 - The nodes represent the state vector
 - Given a state, we can compute what we expect to perceive.
-- We have real observations that relate nodes with each other
+
+- We have real observations that relate nodes to each other
+
 - *Goal:* Find a configuration of the nodes so that the real and predicted observations are as similar as possible.
 
 == Graphical Explanation
@@ -64,7 +66,8 @@ $ e_(i j)=(x_j -x_i)-z_(i j) $
 $ #image("pose_graph.png") $
 
 == Minimization
-- Open problem. You can use gauss-newton if you were doing this from scratch, but ideally use a minimization library (slam_toolbox uses ceres).
+
+- Open problem. You can use Gauss-Newton if you were doing this from scratch, but ideally, use a minimization library (slam_toolbox uses Ceres).
 $ #image("optimization.png", height: 80%) $
 
 == Removing outliers
@@ -89,7 +92,9 @@ $ #image("ICP.png") $
 $ #image("data_association.png", height: 80%) $
 == Transformation
 - Find a transformation to align the two point clouds
-- First align the center of mass of both point clouds, and then rotate them using SVD.
+
+- First, align the center of mass of both point clouds, and then rotate them using SVD.
+
 $ #image("transformation.png", height: 75%) $
 == Iterate
 - Keep going until they converge!
