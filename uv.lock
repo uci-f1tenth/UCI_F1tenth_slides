@@ -479,7 +479,7 @@ wheels = [
 [[package]]
 name = "manimgl"
 version = "1.7.2"
-source = { git = "https://github.com/AlistairKeiller/manim#3e34d578aaad7a784932973e4b28712932cec0a6" }
+source = { git = "https://github.com/AlistairKeiller/manim#b0ca3c9418506e35010211031355f9f00a4ab87d" }
 dependencies = [
     { name = "addict" },
     { name = "appdirs" },

@@ -275,3 +275,41 @@ class ActorViz(VGroup):
             ],
             run_time=rt,
         )
+
+
+class ActionViz(VGroup):
+    def __init__(self, labels, r=0.3, gap=1.4):
+        super().__init__()
+        self.dots = [
+            Circle(
+                radius=r, stroke_color=WHITE, fill_color=BLUE_E, fill_opacity=0.15
+            ).move_to(i * gap * DOWN)
+            for i in range(len(labels))
+        ]
+        self.add(
+            *self.dots,
+            *[
+                Text(l, font_size=24).next_to(self.dots[i], RIGHT)
+                for i, l in enumerate(labels)
+            ],
+        )
+        self.center()
+
+    def pulse(self, logits, rt=0.15):
+        p = torch.softmax(torch.as_tensor(logits, dtype=torch.float32), 0)
+        p = (p - p.min()) / (p.max() - p.min() + 1e-8)
+        return AnimationGroup(
+            *[
+                self.dots[i].animate.set_fill(
+                    interpolate_color(BLUE_E, YELLOW, p[i].item()),
+                    opacity=0.15 + 0.85 * p[i].item(),
+                )
+                for i in range(len(self.dots))
+            ],
+            run_time=rt,
+        )
+
+    def dim(self, rt=0.08):
+        return AnimationGroup(
+            *[d.animate.set_fill(BLUE_E, opacity=0.15) for d in self.dots], run_time=rt
+        )
