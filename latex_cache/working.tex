@@ -28,7 +28,7 @@
 
 \centering
 \begin{align*}
-\text{loss} = \frac{1}{3}(2500.00 + 2167.93 + 2107.26) = 2258.40
+\text{Right: } \text{clip}(\frac{\text{action prob}_{\text{current}}}{\text{action prob}_{\text{old}}}, 0.8, 1.2)\cdot\text{advantage}
 \end{align*}
 
 \end{document}

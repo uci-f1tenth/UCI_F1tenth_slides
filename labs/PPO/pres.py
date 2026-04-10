@@ -620,145 +620,192 @@ class Intro(Scene):
         # ]
         # self.play(*[FadeOut(m) for m in all_on_screen], run_time=0.8)
 
-        # Step 6: Optimize Critic Network
-        subtitle = TexText("Step 6: Optimize Critic Network", font_size=48)
-        self.play(Write(subtitle))
-        self.wait()
-        self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
+        # # Step 6: Optimize Critic Network
+        # subtitle = TexText("Step 6: Optimize Critic Network", font_size=48)
+        # self.play(Write(subtitle))
+        # self.wait()
+        # self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
 
-        formula = Tex(
-            r"\text{loss} = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat{y}_i)^2",
-            font_size=32,
+        # formula = Tex(
+        #     r"\text{loss} = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat{y}_i)^2",
+        #     font_size=32,
+        # )
+        # legend = VGroup(
+        #     Tex(r"y_i = \hat{R}_t \text{ (Rewards-to-Go)}", font_size=26, color=GREY_B),
+        #     Tex(
+        #         r"\hat{y}_i = V(s) \text{ (Critic output)}", font_size=26, color=GREY_B
+        #     ),
+        # ).arrange(DOWN, buff=0.08, aligned_edge=LEFT)
+        # form_grp = VGroup(formula, legend)
+        # form_grp.arrange(DOWN, buff=0.18, aligned_edge=LEFT)
+        # form_grp.next_to(subtitle, DOWN, buff=0.3)
+
+        # self.play(Write(formula))
+        # self.wait(0.5)
+        # self.play(FadeIn(legend))
+        # self.wait()
+
+        # GAM = 0.9
+        # V_S = -50.0
+        # traj_data = [
+        #     ("a", ["→"], [-100]),
+        #     ("b", ["↑", "→", "→", "↓"], [-1, -1, -1, -1]),
+        #     ("c", ["←", "↑", "→", "→", "↓"], [-1, -1, -1, -1, -1]),
+        # ]
+
+        # first_rtgs = []
+        # for _, _, rews in traj_data:
+        #     n = len(rews)
+        #     rtg = [0.0] * n
+        #     rtg[-1] = float(rews[-1])
+        #     for i in range(n - 2, -1, -1):
+        #         rtg[i] = rews[i] + GAM * rtg[i + 1]
+        #     first_rtgs.append(rtg[0])
+
+        # COL_X = [-4.0, -2.2, -0.4, 1.8]  # traj | R̂ | V(s) | squared error
+
+        # headers = VGroup(
+        #     Text("traj", font_size=22, color=YELLOW),
+        #     Tex(r"\hat{R}_t", font_size=22, color=YELLOW),
+        #     Tex(r"V(s)", font_size=22, color=YELLOW),
+        #     Tex(r"(\hat{R}_t - V(s))^2", font_size=22, color=YELLOW),
+        # )
+        # for hdr, x in zip(headers, COL_X):
+        #     hdr.set_x(x)
+        # headers.set_y(0)
+
+        # rows_group = VGroup()
+        # sq_err_vals = []
+        # row_mobs = []
+
+        # for ti, (name, _, _) in enumerate(traj_data):
+        #     rtg = first_rtgs[ti]
+        #     sq = (rtg - V_S) ** 2
+        #     sq_err_vals.append(sq)
+
+        #     cells = VGroup(
+        #         Text(f"{name})", font_size=20),
+        #         Text(f"{rtg:.2f}", font_size=20),
+        #         Text(f"{int(V_S)}", font_size=20),
+        #         Text("?", font_size=20, color=GREEN),
+        #     )
+        #     for cell, x in zip(cells, COL_X):
+        #         cell.set_x(x)
+        #     rows_group.add(cells)
+        #     row_mobs.append(cells[3])
+
+        # rows_group.arrange(DOWN, buff=0.3)
+        # for row in rows_group:
+        #     for cell, x in zip(row, COL_X):
+        #         cell.set_x(x)
+
+        # table = VGroup(headers, rows_group).arrange(DOWN, buff=0.25)
+
+        # for hdr, x in zip(table[0], COL_X):
+        #     hdr.set_x(x)
+        # for row in table[1]:
+        #     for cell, x in zip(row, COL_X):
+        #         cell.set_x(x)
+
+        # table.next_to(form_grp, DOWN, buff=0.35)
+
+        # self.play(FadeIn(headers), run_time=0.5)
+        # self.play(LaggedStartMap(FadeIn, rows_group, lag_ratio=0.2), run_time=0.6)
+        # self.wait(0.5)
+
+        # for ti in range(len(traj_data)):
+        #     rtg = first_rtgs[ti]
+        #     sq = sq_err_vals[ti]
+        #     row = rows_group[ti]
+
+        #     calc_str = f"({rtg:.2f} - ({int(V_S)}))^2 = ({rtg - V_S:.2f})^2 = {sq:.2f}"
+        #     calc = Tex(calc_str, font_size=24)
+        #     calc.to_edge(DOWN, buff=0.4)
+
+        #     new_sq = Text(f"{sq:.2f}", font_size=20, color=GREEN)
+        #     new_sq.move_to(row_mobs[ti])
+
+        #     self.play(FadeIn(calc), run_time=0.25)
+        #     self.play(FadeTransform(row_mobs[ti], new_sq), run_time=0.3)
+        #     row_mobs[ti] = new_sq
+
+        #     # Build a fresh VGroup with the ACTUAL live mobs so the box fits correctly
+        #     live_row = VGroup(row[0], row[1], row[2], new_sq)
+        #     hl = SurroundingRectangle(live_row, color=YELLOW, buff=0.1)
+        #     self.play(ShowCreation(hl), run_time=0.2)
+        #     self.wait(0.3)
+        #     self.play(FadeOut(hl), FadeOut(calc), run_time=0.2)
+
+        # self.wait(0.4)
+
+        # mean_loss = sum(sq_err_vals) / len(sq_err_vals)
+        # loss_str = (
+        #     r"\text{loss} = \frac{1}{3}("
+        #     + " + ".join(f"{v:.2f}" for v in sq_err_vals)
+        #     + rf") = {mean_loss:.2f}"
+        # )
+        # loss_final = Tex(loss_str, font_size=28, color=BLUE)
+        # loss_final.to_edge(DOWN, buff=0.5)
+
+        # live_rows = VGroup(
+        #     *[
+        #         VGroup(row[0], row[1], row[2], row_mobs[ti])
+        #         for ti, row in enumerate(rows_group)
+        #     ]
+        # )
+        # hl_all = SurroundingRectangle(live_rows, color=BLUE, buff=0.1)
+        # self.play(ShowCreation(hl_all), run_time=0.3)
+        # self.play(FadeIn(loss_final), run_time=0.5)
+        # self.wait()
+        # self.play(FadeOut(hl_all), run_time=0.2)
+        # self.wait()
+
+        # all_on_screen = [table, formula, legend, subtitle, loss_final, *row_mobs]
+        # self.play(*[FadeOut(m) for m in all_on_screen], run_time=0.8)
+
+        # Step 7: Optimize Actor Network
+        # subtitle = TexText("Step 7: Optimize Actor Network", font_size=48)
+        # self.play(Write(subtitle))
+        # self.wait()
+        # self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
+
+        clip = Tex(
+            "L^{CLIP}(\\theta)=\\mathbb{E}_t \\bigl[\\min\\bigl(r_t(\\theta)\\hat{A_t}, \\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}\\bigr)\\bigr]"
         )
-        legend = VGroup(
-            Tex(r"y_i = \hat{R}_t \text{ (Rewards-to-Go)}", font_size=26, color=GREY_B),
-            Tex(
-                r"\hat{y}_i = V(s) \text{ (Critic output)}", font_size=26, color=GREY_B
-            ),
-        ).arrange(DOWN, buff=0.08, aligned_edge=LEFT)
-        form_grp = VGroup(formula, legend)
-        form_grp.arrange(DOWN, buff=0.18, aligned_edge=LEFT)
-        form_grp.next_to(subtitle, DOWN, buff=0.3)
-
-        self.play(Write(formula))
-        self.wait(0.5)
-        self.play(FadeIn(legend))
+        self.play(Write(clip), run_time=2)
         self.wait()
 
-        GAM = 0.9
-        V_S = -50.0
-        traj_data = [
-            ("a", ["→"], [-100]),
-            ("b", ["↑", "→", "→", "↓"], [-1, -1, -1, -1]),
-            ("c", ["←", "↑", "→", "→", "↓"], [-1, -1, -1, -1, -1]),
-        ]
-
-        first_rtgs = []
-        for _, _, rews in traj_data:
-            n = len(rews)
-            rtg = [0.0] * n
-            rtg[-1] = float(rews[-1])
-            for i in range(n - 2, -1, -1):
-                rtg[i] = rews[i] + GAM * rtg[i + 1]
-            first_rtgs.append(rtg[0])
-
-        COL_X = [-4.0, -2.2, -0.4, 1.8]  # traj | R̂ | V(s) | squared error
-
-        headers = VGroup(
-            Text("traj", font_size=22, color=YELLOW),
-            Tex(r"\hat{R}_t", font_size=22, color=YELLOW),
-            Tex(r"V(s)", font_size=22, color=YELLOW),
-            Tex(r"(\hat{R}_t - V(s))^2", font_size=22, color=YELLOW),
-        )
-        for hdr, x in zip(headers, COL_X):
-            hdr.set_x(x)
-        headers.set_y(0)
-
-        rows_group = VGroup()
-        sq_err_vals = []
-        row_mobs = []
-
-        for ti, (name, _, _) in enumerate(traj_data):
-            rtg = first_rtgs[ti]
-            sq = (rtg - V_S) ** 2
-            sq_err_vals.append(sq)
-
-            cells = VGroup(
-                Text(f"{name})", font_size=20),
-                Text(f"{rtg:.2f}", font_size=20),
-                Text(f"{int(V_S)}", font_size=20),
-                Text("?", font_size=20, color=GREEN),
-            )
-            for cell, x in zip(cells, COL_X):
-                cell.set_x(x)
-            rows_group.add(cells)
-            row_mobs.append(cells[3])
-
-        rows_group.arrange(DOWN, buff=0.3)
-        for row in rows_group:
-            for cell, x in zip(row, COL_X):
-                cell.set_x(x)
-
-        table = VGroup(headers, rows_group).arrange(DOWN, buff=0.25)
-
-        for hdr, x in zip(table[0], COL_X):
-            hdr.set_x(x)
-        for row in table[1]:
-            for cell, x in zip(row, COL_X):
-                cell.set_x(x)
-
-        table.next_to(form_grp, DOWN, buff=0.35)
-
-        self.play(FadeIn(headers), run_time=0.5)
-        self.play(LaggedStartMap(FadeIn, rows_group, lag_ratio=0.2), run_time=0.6)
-        self.wait(0.5)
-
-        for ti in range(len(traj_data)):
-            rtg = first_rtgs[ti]
-            sq = sq_err_vals[ti]
-            row = rows_group[ti]
-
-            calc_str = f"({rtg:.2f} - ({int(V_S)}))^2 = ({rtg - V_S:.2f})^2 = {sq:.2f}"
-            calc = Tex(calc_str, font_size=24)
-            calc.to_edge(DOWN, buff=0.4)
-
-            new_sq = Text(f"{sq:.2f}", font_size=20, color=GREEN)
-            new_sq.move_to(row_mobs[ti])
-
-            self.play(FadeIn(calc), run_time=0.25)
-            self.play(FadeTransform(row_mobs[ti], new_sq), run_time=0.3)
-            row_mobs[ti] = new_sq
-
-            # Build a fresh VGroup with the ACTUAL live mobs so the box fits correctly
-            live_row = VGroup(row[0], row[1], row[2], new_sq)
-            hl = SurroundingRectangle(live_row, color=YELLOW, buff=0.1)
-            self.play(ShowCreation(hl), run_time=0.2)
-            self.wait(0.3)
-            self.play(FadeOut(hl), FadeOut(calc), run_time=0.2)
-
-        self.wait(0.4)
-
-        mean_loss = sum(sq_err_vals) / len(sq_err_vals)
-        loss_str = (
-            r"\text{loss} = \frac{1}{3}("
-            + " + ".join(f"{v:.2f}" for v in sq_err_vals)
-            + rf") = {mean_loss:.2f}"
-        )
-        loss_final = Tex(loss_str, font_size=28, color=BLUE)
-        loss_final.to_edge(DOWN, buff=0.5)
-
-        live_rows = VGroup(
-            *[
-                VGroup(row[0], row[1], row[2], row_mobs[ti])
-                for ti, row in enumerate(rows_group)
-            ]
-        )
-        hl_all = SurroundingRectangle(live_rows, color=BLUE, buff=0.1)
-        self.play(ShowCreation(hl_all), run_time=0.3)
-        self.play(FadeIn(loss_final), run_time=0.5)
-        self.wait()
-        self.play(FadeOut(hl_all), run_time=0.2)
+        self.play(clip.animate.shift(UP * 2))
+        clip_min_left = Tex("\\text{Left: }r_t(\\theta)\\hat{A_t}").next_to(clip, DOWN)
+        self.play(Write(clip_min_left), run_time=0.8)
         self.wait()
 
-        all_on_screen = [table, formula, legend, subtitle, loss_final, *row_mobs]
-        self.play(*[FadeOut(m) for m in all_on_screen], run_time=0.8)
+        clip_min_left2 = Tex(
+            "\\text{Left: } \\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}\\hat{A_t}"
+        ).next_to(clip, DOWN * 1.5)
+        self.play(TransformMatchingTex(clip_min_left, clip_min_left2), run_time=0.8)
+        self.wait()
+
+        clip_min_left3 = Tex(
+            "\\text{Left: } \\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}\\cdot\\text{advantage}"
+        ).next_to(clip, DOWN * 1.5)
+        self.play(TransformMatchingTex(clip_min_left2, clip_min_left3), run_time=0.8)
+        self.wait()
+
+        clip_min_right = Tex(
+            "\\text{Right: } \\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}"
+        ).next_to(clip_min_left3, DOWN * 1.5)
+        self.play(Write(clip_min_right), run_time=0.8)
+        self.wait()
+
+        clip_min_right2 = Tex(
+            "\\text{Right: } \\text{clip}(r_t(\\theta), 0.8, 1.2)\\hat{A_t}"
+        ).next_to(clip_min_left3, DOWN * 1.5)
+        self.play(TransformMatchingTex(clip_min_right, clip_min_right2), run_time=0.8)
+        self.wait()
+
+        clip_min_right3 = Tex(
+            "\\text{Right: } \\text{clip}(\\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}, 0.8, 1.2)\\cdot\\text{advantage}"
+        ).next_to(clip_min_left3, DOWN * 1.5)
+        self.play(TransformMatchingTex(clip_min_right2, clip_min_right3), run_time=0.8)
+        self.wait()
