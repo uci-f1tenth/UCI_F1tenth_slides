@@ -419,20 +419,19 @@ class Intro(Scene):
         self.wait()
         self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
 
-        # ── Formula (expanded + recursive) ──
         formula = Tex(
             r"\hat R_t = r_t + \gamma\, r_{t+1} + \gamma^2 r_{t+2} + \cdots",
-            font_size=36,
+            font_size=32,
         )
         recursive = Tex(
             r"= r_t + \gamma\,\hat R_{t+1}",
-            font_size=36,
+            font_size=32,
             color=BLUE,
         )
-        gamma_lbl = Tex(r"\gamma = 0.99", font_size=30, color=YELLOW)
+        gamma_lbl = Tex(r"\gamma = 0.9", font_size=28, color=YELLOW)
         form_grp = VGroup(formula, recursive, gamma_lbl)
-        form_grp.arrange(DOWN, buff=0.15, aligned_edge=LEFT)
-        form_grp.next_to(subtitle, DOWN, buff=0.4)
+        form_grp.arrange(DOWN, buff=0.12, aligned_edge=LEFT)
+        form_grp.next_to(subtitle, DOWN, buff=0.3)
 
         self.play(Write(formula))
         self.wait(0.5)
@@ -441,97 +440,83 @@ class Intro(Scene):
         self.wait()
 
         GAM = 0.9
-        rews = [-1, -1, -1, -1]
-        syms = ["↑", "→", "→", "↓"]
-        n = len(rews)
+        traj_data = [
+            ("a", ["→"], [-100]),
+            ("b", ["↑", "→", "→", "↓"], [-1, -1, -1, -1]),
+            ("c", ["←", "↑", "→", "→", "↓"], [-1, -1, -1, -1, -1]),
+        ]
 
-        rtg_vals = [0.0] * n
-        rtg_vals[-1] = float(rews[-1])
-        for i in range(n - 2, -1, -1):
-            rtg_vals[i] = rews[i] + GAM * rtg_vals[i + 1]
+        all_rtgs = []
+        for _, _, rews in traj_data:
+            n = len(rews)
+            rtg = [0.0] * n
+            rtg[-1] = float(rews[-1])
+            for i in range(n - 2, -1, -1):
+                rtg[i] = rews[i] + GAM * rtg[i + 1]
+            all_rtgs.append(rtg)
 
-        cols = VGroup()
-        for i in range(n):
-            t_lbl = Text(f"t={i}", font_size=16, color=GREY)
-            a_txt = Text(syms[i], font_size=32)
-            r_txt = Text(f"r = {rews[i]}", font_size=20)
-            col = VGroup(t_lbl, a_txt, r_txt).arrange(DOWN, buff=0.1)
-            cols.add(col)
-        cols.arrange(RIGHT, buff=1.2)
-        cols.next_to(form_grp, DOWN, buff=0.6)
+        all_rows = VGroup()
+        all_rtg_mobs = []
 
-        conn = VGroup()
-        for i in range(n - 1):
-            conn.add(
-                Arrow(
-                    cols[i].get_right(),
-                    cols[i + 1].get_left(),
-                    buff=0.1,
-                    stroke_width=2,
-                    color=GREY,
-                )
-            )
+        for ti, (name, syms, rews) in enumerate(traj_data):
+            lbl = Text(f"{name})", font_size=22, color=YELLOW)
+            step_cols = VGroup()
+            rtg_mobs = []
+            for si in range(len(syms)):
+                arrow = Text(syms[si], font_size=26)
+                rew = Text(f"r={rews[si]}", font_size=14, color=GREY_B)
+                rtg_q = Text("?", font_size=16, color=GREEN)
+                col = VGroup(arrow, rew, rtg_q).arrange(DOWN, buff=0.05)
+                step_cols.add(col)
+                rtg_mobs.append(rtg_q)
+            step_cols.arrange(RIGHT, buff=0.5)
+            row = VGroup(lbl, step_cols).arrange(RIGHT, buff=0.3)
+            all_rows.add(row)
+            all_rtg_mobs.append(rtg_mobs)
 
-        self.play(
-            LaggedStartMap(FadeIn, cols, lag_ratio=0.15),
-            *[GrowArrow(a) for a in conn],
-            run_time=0.8,
-        )
+        all_rows.arrange(DOWN, buff=0.25, aligned_edge=LEFT)
+        all_rows.next_to(form_grp, DOWN, buff=0.35)
+
+        self.play(LaggedStartMap(FadeIn, all_rows, lag_ratio=0.2), run_time=0.8)
         self.wait(0.5)
 
-        rtg_txts = []
-        for i in range(n):
-            t = Text("?", font_size=22, color=GREEN)
-            t.next_to(cols[i], DOWN, buff=0.3)
-            rtg_txts.append(t)
+        for ti, (name, syms, rews) in enumerate(traj_data):
+            n = len(rews)
+            rtg_vals = all_rtgs[ti]
+            rtg_mobs = all_rtg_mobs[ti]
 
-        rtg_hdr = Tex(r"\hat R_t \;:", font_size=22, color=GREEN)
-        rtg_hdr.next_to(rtg_txts[0], LEFT, buff=0.5)
+            for i in range(n - 1, -1, -1):
+                col_mob = all_rows[ti][1][i]
+                hl = SurroundingRectangle(col_mob, color=YELLOW, buff=0.08)
 
-        self.play(FadeIn(rtg_hdr), *[FadeIn(t) for t in rtg_txts], run_time=0.4)
-        self.wait(0.3)
+                if i == n - 1:
+                    calc_str = f"\\hat R = {rtg_vals[i]:.2f}"
+                else:
+                    calc_str = (
+                        f"\\hat R = {rews[i]:.0f}"
+                        f" + 0.9 \\times ({rtg_vals[i + 1]:.2f})"
+                        f" = {rtg_vals[i]:.2f}"
+                    )
+                calc = Tex(calc_str, font_size=24)
+                calc.to_edge(DOWN, buff=0.4)
 
-        for i in range(n - 1, -1, -1):
-            hl = SurroundingRectangle(
-                VGroup(cols[i], rtg_txts[i]), color=YELLOW, buff=0.12
-            )
+                new_rtg = Text(f"{rtg_vals[i]:.2f}", font_size=16)
+                new_rtg.move_to(rtg_mobs[i])
 
-            if i == n - 1:
-                calc_str = f"\\hat R_{i} = {rtg_vals[i]:.2f}"
-            else:
-                calc_str = (
-                    f"\\hat R_{i} = {rews[i]:.0f}"
-                    f" + {GAM} \\times ({rtg_vals[i + 1]:.2f})"
-                    f" = {rtg_vals[i]:.2f}"
-                )
-
-            calc = Tex(calc_str, font_size=26)
-            calc.to_edge(DOWN, buff=0.5)
-
-            new_rtg = Text(f"{rtg_vals[i]:.2f}", font_size=22, color=GREEN)
-            new_rtg.move_to(rtg_txts[i])
-
-            self.play(ShowCreation(hl), FadeIn(calc), run_time=0.3)
-            self.play(FadeTransform(rtg_txts[i], new_rtg), run_time=0.4)
-            rtg_txts[i] = new_rtg
-            self.wait(0.4)
-            self.play(FadeOut(hl), FadeOut(calc), run_time=0.3)
+                self.play(ShowCreation(hl), FadeIn(calc), run_time=0.25)
+                self.play(FadeTransform(rtg_mobs[i], new_rtg), run_time=0.3)
+                rtg_mobs[i] = new_rtg
+                self.wait(0.3)
+                self.play(FadeOut(hl), FadeOut(calc), run_time=0.2)
 
         self.wait()
 
-        self.play(
-            *[
-                FadeOut(m)
-                for m in [
-                    cols,
-                    conn,
-                    rtg_hdr,
-                    *rtg_txts,
-                    formula,
-                    recursive,
-                    gamma_lbl,
-                    subtitle,
-                ]
-            ],
-            run_time=0.8,
-        )
+        all_on_screen = [
+            all_rows,
+            formula,
+            recursive,
+            gamma_lbl,
+            subtitle,
+            *[mob for traj_mobs in all_rtg_mobs for mob in traj_mobs],
+        ]
+        self.play(*[FadeOut(m) for m in all_on_screen], run_time=0.8)
