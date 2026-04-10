@@ -769,43 +769,62 @@ class Intro(Scene):
         # self.wait()
         # self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
 
+        LEFT_COLOR = GREEN
+        RIGHT_COLOR = BLUE
+
         clip = Tex(
-            "L^{CLIP}(\\theta)=\\mathbb{E}_t \\bigl[\\min\\bigl(r_t(\\theta)\\hat{A_t}, \\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}\\bigr)\\bigr]"
+            "L^{CLIP}(\\theta)=\\mathbb{E}_t \\bigl[\\min\\bigl(r_t(\\theta)\\hat{A_t}, \\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}\\bigr)\\bigr]",
+            tex_to_color_map={
+                "r_t(\\theta)\\hat{A_t}": LEFT_COLOR,
+                "\\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}": RIGHT_COLOR,
+            },
         )
         self.play(Write(clip), run_time=2)
         self.wait()
-
         self.play(clip.animate.shift(UP * 2))
+
         clip_min_left = Tex("\\text{Left: }r_t(\\theta)\\hat{A_t}").next_to(clip, DOWN)
+        clip_min_left.set_color(LEFT_COLOR)
+        clip_min_left.set_color_by_tex("\\text{Left}", WHITE)
         self.play(Write(clip_min_left), run_time=0.8)
         self.wait()
 
         clip_min_left2 = Tex(
             "\\text{Left: } \\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}\\hat{A_t}"
         ).next_to(clip, DOWN * 1.5)
+        clip_min_left2.set_color(LEFT_COLOR)
+        clip_min_left2.set_color_by_tex("\\text{Left}", WHITE)
         self.play(TransformMatchingTex(clip_min_left, clip_min_left2), run_time=0.8)
         self.wait()
 
         clip_min_left3 = Tex(
             "\\text{Left: } \\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}\\cdot\\text{advantage}"
         ).next_to(clip, DOWN * 1.5)
+        clip_min_left3.set_color(LEFT_COLOR)
+        clip_min_left3.set_color_by_tex("\\text{Left}", WHITE)
         self.play(TransformMatchingTex(clip_min_left2, clip_min_left3), run_time=0.8)
         self.wait()
 
         clip_min_right = Tex(
             "\\text{Right: } \\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}"
         ).next_to(clip_min_left3, DOWN * 1.5)
+        clip_min_right.set_color(RIGHT_COLOR)
+        clip_min_right.set_color_by_tex("\\text{Right}", WHITE)
         self.play(Write(clip_min_right), run_time=0.8)
         self.wait()
 
         clip_min_right2 = Tex(
             "\\text{Right: } \\text{clip}(r_t(\\theta), 0.8, 1.2)\\hat{A_t}"
         ).next_to(clip_min_left3, DOWN * 1.5)
+        clip_min_right2.set_color(RIGHT_COLOR)
+        clip_min_right2.set_color_by_tex("\\text{Right}", WHITE)
         self.play(TransformMatchingTex(clip_min_right, clip_min_right2), run_time=0.8)
         self.wait()
 
         clip_min_right3 = Tex(
             "\\text{Right: } \\text{clip}(\\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}, 0.8, 1.2)\\cdot\\text{advantage}"
         ).next_to(clip_min_left3, DOWN * 1.5)
+        clip_min_right3.set_color(RIGHT_COLOR)
+        clip_min_right3.set_color_by_tex("\\text{Right}", WHITE)
         self.play(TransformMatchingTex(clip_min_right2, clip_min_right3), run_time=0.8)
         self.wait()

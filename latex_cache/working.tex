@@ -28,7 +28,7 @@
 
 \centering
 \begin{align*}
-\text{Right: } \text{clip}(\frac{\text{action prob}_{\text{current}}}{\text{action prob}_{\text{old}}}, 0.8, 1.2)\cdot\text{advantage}
+L^{CLIP}(\theta)=\mathbb{E}_t \bigl[\min\bigl({{\color[RGB]{0, 0, 1}r_t(\theta)\hat{A_t}}}, {{\color[RGB]{0, 0, 2}\text{clip}(r_t(\theta), 1-\varepsilon, 1+\varepsilon)\hat{A_t}}}\bigr)\bigr]
 \end{align*}
 
 \end{document}
