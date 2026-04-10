@@ -879,7 +879,7 @@ class Intro(Scene):
             height=4,
             width=4,
             num_sampled_graph_points_per_tick=100,
-        ).shift(LEFT * 3.5 + DOWN * 1.5)
+        ).shift(LEFT * 3.5 + DOWN * 1.2)
         left_axis_x_label, left_axis_y_label = left_axis.get_axis_labels(
             "r", "L^{CLIP}"
         )
@@ -919,7 +919,7 @@ class Intro(Scene):
             height=4,
             width=4,
             num_sampled_graph_points_per_tick=100,
-        ).shift(RIGHT * 3.5 + DOWN * 1.5)
+        ).shift(RIGHT * 3.5 + DOWN * 1.2)
         right_axis_x_label = right_axis.get_x_axis_label("r")
         right_axis_y_label = right_axis.get_y_axis_label(
             "L^{CLIP}", edge=DOWN, direction=UR
@@ -953,7 +953,6 @@ class Intro(Scene):
         self.wait()
 
         self.play(
-            FadeOut(clip),
             FadeOut(right_axis),
             FadeOut(right_axis_graph),
             FadeOut(right_axis_line1),
@@ -976,6 +975,33 @@ class Intro(Scene):
             FadeOut(left_axis_title),
             run_time=0.8,
         )
+
+        clip2 = Tex(
+            "L^{CLIP}(\\theta)=\\mathbb{E}_t \\bigl[\\min\\bigl(\\hat{A_t}, \\text{clip}(1, 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}\\bigr)\\bigr]",
+            tex_to_color_map={
+                "\\hat{A_t}": LEFT_COLOR,
+                "\\text{clip}(1, 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}": RIGHT_COLOR,
+            },
+        ).shift(UP * 2)
+        self.play(TransformMatchingTex(clip, clip2))
+        self.wait()
+
+        clip3 = Tex(
+            "L^{CLIP}(\\theta)=\\mathbb{E}_t \\bigl[\\min\\bigl(\\hat{A_t}, \\hat{A_t}\\bigr)\\bigr]",
+            tex_to_color_map={
+                "\\hat{A_t}": LEFT_COLOR,
+                "\\hat{A_t}": RIGHT_COLOR,
+            },
+        ).shift(UP * 2)
+        self.play(TransformMatchingTex(clip2, clip3))
+        self.wait()
+
+        clip4 = Tex(
+            "L^{CLIP}(\\theta)=\\mathbb{E}_t \\bigl[\\hat{A_t}\\bigr]",
+        ).shift(UP * 2)
+        self.play(TransformMatchingTex(clip3, clip4))
+        self.wait()
+        self.play(FadeOut(clip4), FadeOut(subtitle))
 
         # Step 8: Repeat steps 6 & 7
         subtitle = TexText("Step 8: Repeat steps 6 and 7 n times", font_size=48)
