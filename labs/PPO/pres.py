@@ -1,3 +1,5 @@
+from turtle import right
+
 import gymnasium as gym
 from manimlib import *
 from PIL import Image
@@ -769,62 +771,148 @@ class Intro(Scene):
         # self.wait()
         # self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
 
-        LEFT_COLOR = GREEN
-        RIGHT_COLOR = BLUE
+        # LEFT_COLOR = GREEN
+        # RIGHT_COLOR = BLUE
 
-        clip = Tex(
-            "L^{CLIP}(\\theta)=\\mathbb{E}_t \\bigl[\\min\\bigl(r_t(\\theta)\\hat{A_t}, \\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}\\bigr)\\bigr]",
-            tex_to_color_map={
-                "r_t(\\theta)\\hat{A_t}": LEFT_COLOR,
-                "\\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}": RIGHT_COLOR,
-            },
+        # clip = Tex(
+        #     "L^{CLIP}(\\theta)=\\mathbb{E}_t \\bigl[\\min\\bigl(r_t(\\theta)\\hat{A_t}, \\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}\\bigr)\\bigr]",
+        #     tex_to_color_map={
+        #         "r_t(\\theta)\\hat{A_t}": LEFT_COLOR,
+        #         "\\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}": RIGHT_COLOR,
+        #     },
+        # )
+        # self.play(Write(clip), run_time=2)
+        # self.wait()
+        # self.play(clip.animate.shift(UP * 2))
+
+        # clip_min_left = Tex("\\text{Left: }r_t(\\theta)\\hat{A_t}").next_to(clip, DOWN)
+        # clip_min_left.set_color(LEFT_COLOR)
+        # clip_min_left.set_color_by_tex("\\text{Left}", WHITE)
+        # self.play(Write(clip_min_left), run_time=0.8)
+        # self.wait()
+
+        # clip_min_left2 = Tex(
+        #     "\\text{Left: } \\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}\\hat{A_t}"
+        # ).next_to(clip, DOWN * 1.5)
+        # clip_min_left2.set_color(LEFT_COLOR)
+        # clip_min_left2.set_color_by_tex("\\text{Left}", WHITE)
+        # self.play(TransformMatchingTex(clip_min_left, clip_min_left2), run_time=0.8)
+        # self.wait()
+
+        # clip_min_left3 = Tex(
+        #     "\\text{Left: } \\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}\\cdot\\text{advantage}"
+        # ).next_to(clip, DOWN * 1.5)
+        # clip_min_left3.set_color(LEFT_COLOR)
+        # clip_min_left3.set_color_by_tex("\\text{Left}", WHITE)
+        # self.play(TransformMatchingTex(clip_min_left2, clip_min_left3), run_time=0.8)
+        # self.wait()
+
+        # clip_min_right = Tex(
+        #     "\\text{Right: } \\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}"
+        # ).next_to(clip_min_left3, DOWN * 1.5)
+        # clip_min_right.set_color(RIGHT_COLOR)
+        # clip_min_right.set_color_by_tex("\\text{Right}", WHITE)
+        # self.play(Write(clip_min_right), run_time=0.8)
+        # self.wait()
+
+        # clip_min_right2 = Tex(
+        #     "\\text{Right: } \\text{clip}(r_t(\\theta), 0.8, 1.2)\\hat{A_t}"
+        # ).next_to(clip_min_left3, DOWN * 1.5)
+        # clip_min_right2.set_color(RIGHT_COLOR)
+        # clip_min_right2.set_color_by_tex("\\text{Right}", WHITE)
+        # self.play(TransformMatchingTex(clip_min_right, clip_min_right2), run_time=0.8)
+        # self.wait()
+
+        # clip_min_right3 = Tex(
+        #     "\\text{Right: } \\text{clip}(\\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}, 0.8, 1.2)\\cdot\\text{advantage}"
+        # ).next_to(clip_min_left3, DOWN * 1.5)
+        # clip_min_right3.set_color(RIGHT_COLOR)
+        # clip_min_right3.set_color_by_tex("\\text{Right}", WHITE)
+        # self.play(TransformMatchingTex(clip_min_right2, clip_min_right3), run_time=0.8)
+        # self.wait()
+
+        # self.play(FadeOut(clip_min_left3), FadeOut(clip_min_right3))
+
+        eps = 0.3
+
+        left_axis = Axes(
+            x_range=(0, 2, 1),
+            y_range=(0, 2, 1),
+            axis_config=dict(
+                stroke_width=3,
+            ),
+            height=4,
+            width=4,
+            num_sampled_graph_points_per_tick=100,
+        ).shift(LEFT * 3.5)
+        left_axis_x_label, left_axis_y_label = left_axis.get_axis_labels(
+            "r", "L^{CLIP}"
         )
-        self.play(Write(clip), run_time=2)
-        self.wait()
-        self.play(clip.animate.shift(UP * 2))
-
-        clip_min_left = Tex("\\text{Left: }r_t(\\theta)\\hat{A_t}").next_to(clip, DOWN)
-        clip_min_left.set_color(LEFT_COLOR)
-        clip_min_left.set_color_by_tex("\\text{Left}", WHITE)
-        self.play(Write(clip_min_left), run_time=0.8)
-        self.wait()
-
-        clip_min_left2 = Tex(
-            "\\text{Left: } \\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}\\hat{A_t}"
-        ).next_to(clip, DOWN * 1.5)
-        clip_min_left2.set_color(LEFT_COLOR)
-        clip_min_left2.set_color_by_tex("\\text{Left}", WHITE)
-        self.play(TransformMatchingTex(clip_min_left, clip_min_left2), run_time=0.8)
-        self.wait()
-
-        clip_min_left3 = Tex(
-            "\\text{Left: } \\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}\\cdot\\text{advantage}"
-        ).next_to(clip, DOWN * 1.5)
-        clip_min_left3.set_color(LEFT_COLOR)
-        clip_min_left3.set_color_by_tex("\\text{Left}", WHITE)
-        self.play(TransformMatchingTex(clip_min_left2, clip_min_left3), run_time=0.8)
-        self.wait()
-
-        clip_min_right = Tex(
-            "\\text{Right: } \\text{clip}(r_t(\\theta), 1-\\varepsilon, 1+\\varepsilon)\\hat{A_t}"
-        ).next_to(clip_min_left3, DOWN * 1.5)
-        clip_min_right.set_color(RIGHT_COLOR)
-        clip_min_right.set_color_by_tex("\\text{Right}", WHITE)
-        self.play(Write(clip_min_right), run_time=0.8)
+        left_axis_graph = left_axis.get_graph(
+            lambda x: min(x, 1 + eps),
+            use_smoothing=False,
+        )
+        left_axis_line1 = left_axis.get_v_line(left_axis.c2p(1, 1))
+        left_axis_line2 = left_axis.get_v_line(left_axis.c2p(1 + eps, 1 + eps))
+        left_axis_label1 = Tex("1", font_size=24).next_to(left_axis.c2p(1, 0), DOWN)
+        left_axis_label2 = Tex("1+\\varepsilon", font_size=24).next_to(
+            left_axis.c2p(1 + eps, 0), DOWN
+        )
+        left_axis_dot = Dot(left_axis.c2p(1, 1))
+        left_axis_title = Tex("A>0", font_size=24).next_to(left_axis, UP)
+        self.play(
+            ShowCreation(left_axis),
+            ShowCreation(left_axis_graph),
+            ShowCreation(left_axis_line1),
+            ShowCreation(left_axis_line2),
+            ShowCreation(left_axis_dot),
+            ShowCreation(left_axis_label1),
+            ShowCreation(left_axis_label2),
+            ShowCreation(left_axis_x_label),
+            ShowCreation(left_axis_y_label),
+            ShowCreation(left_axis_title),
+            run_time=0.8,
+        )
         self.wait()
 
-        clip_min_right2 = Tex(
-            "\\text{Right: } \\text{clip}(r_t(\\theta), 0.8, 1.2)\\hat{A_t}"
-        ).next_to(clip_min_left3, DOWN * 1.5)
-        clip_min_right2.set_color(RIGHT_COLOR)
-        clip_min_right2.set_color_by_tex("\\text{Right}", WHITE)
-        self.play(TransformMatchingTex(clip_min_right, clip_min_right2), run_time=0.8)
-        self.wait()
+        right_axis = Axes(
+            x_range=(0, 2, 1),
+            y_range=(0, -2, 1),
+            axis_config=dict(
+                stroke_width=3,
+            ),
+            height=4,
+            width=4,
+            num_sampled_graph_points_per_tick=100,
+        ).shift(RIGHT * 3.5)
+        right_axis_x_label = right_axis.get_x_axis_label("r")
+        right_axis_y_label = right_axis.get_y_axis_label(
+            "L^{CLIP}", edge=DOWN, direction=UR
+        )
+        right_axis_graph = right_axis.get_graph(
+            lambda x: min(-x, -1 + eps),
+            use_smoothing=False,
+        )
+        right_axis_line1 = right_axis.get_v_line(right_axis.c2p(1, -1))
+        right_axis_line2 = right_axis.get_v_line(right_axis.c2p(1 - eps, -1 + eps))
+        right_axis_label1 = Tex("1", font_size=24).next_to(right_axis.c2p(1, 0), UP)
+        right_axis_label2 = Tex("1-\\varepsilon", font_size=24).next_to(
+            right_axis.c2p(1 - eps, 0), UP
+        )
+        right_axis_dot = Dot(right_axis.c2p(1, -1))
+        right_axis_title = Tex("A<0", font_size=24).next_to(right_axis, DOWN)
+        self.play(
+            ShowCreation(right_axis),
+            ShowCreation(right_axis_graph),
+            ShowCreation(right_axis_line1),
+            ShowCreation(right_axis_line2),
+            ShowCreation(right_axis_dot),
+            ShowCreation(right_axis_label1),
+            ShowCreation(right_axis_label2),
+            ShowCreation(right_axis_x_label),
+            ShowCreation(right_axis_y_label),
+            ShowCreation(right_axis_title),
+            run_time=0.8,
+        )
 
-        clip_min_right3 = Tex(
-            "\\text{Right: } \\text{clip}(\\frac{\\text{action prob}_{\\text{current}}}{\\text{action prob}_{\\text{old}}}, 0.8, 1.2)\\cdot\\text{advantage}"
-        ).next_to(clip_min_left3, DOWN * 1.5)
-        clip_min_right3.set_color(RIGHT_COLOR)
-        clip_min_right3.set_color_by_tex("\\text{Right}", WHITE)
-        self.play(TransformMatchingTex(clip_min_right2, clip_min_right3), run_time=0.8)
         self.wait()
