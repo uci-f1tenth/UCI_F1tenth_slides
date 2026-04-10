@@ -152,7 +152,42 @@ class Intro(Scene):
         self.wait()
         self.play(FadeOut(title))
 
-        # Add a why PPO section (LLMs, Robotics, etc.)
+        # Why PPO
+        subtitle = TexText("Why PPO", font_size=72)
+        self.play(Write(subtitle))
+        self.wait()
+        self.play(subtitle.animate.scale(0.5).to_edge(UP))
+
+        images = []
+        paths = [f for f in Path("labs/PPO/uses").iterdir() if f.is_file()]
+
+        rows, cols = 2, 4
+        num_to_show = min(len(paths), rows * cols)
+
+        grid_width, grid_height = 10, 2
+        x_step = grid_width / (cols - 1) if cols > 1 else 0
+        y_step = grid_height / (rows - 1) if rows > 1 else 0
+
+        start_x = -grid_width / 2
+        start_y = -grid_height / 2
+
+        for i in range(num_to_show):
+            row, col = divmod(i, cols)
+
+            pos_x = start_x + (col * x_step) + random.uniform(-0.3, 0.3)
+            pos_y = start_y + (row * y_step) + random.uniform(-0.3, 0.3)
+
+            img_obj = (
+                ImageMobject(str(paths[i]))
+                .scale(0.5)
+                .move_to([pos_x, pos_y, 0])
+                .rotate(random.uniform(-math.pi / 15, math.pi / 15))
+            )
+            images.append(img_obj)
+
+        self.play(*[FadeIn(img) for img in images])
+        self.wait()
+        self.play(*[FadeOut(img) for img in images], FadeOut(subtitle))
 
         # Part 0: The Environment
         title = TexText("Part 0: The Environment", font_size=72)
