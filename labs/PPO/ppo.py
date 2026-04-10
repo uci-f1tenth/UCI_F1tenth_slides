@@ -174,6 +174,7 @@ def get_activations(agent, state):
             x = m(x)
             if isinstance(m, nn.Tanh) or i == len(agent.π_θ) - 1:
                 acts.append(x.clone())
+        acts[-1] = torch.softmax(acts[-1], dim=-1)
     return acts
 
 
@@ -228,8 +229,7 @@ class ActorViz(VGroup):
         anims = []
         for i, (a, col) in enumerate(zip(acts, self.nodes)):
             c = pal[min(i, len(pal) - 1)]
-            v = a.abs()
-            v = (v - v.min()) / (v.max() - v.min() + 1e-8)
+            v = a.abs().clamp(0, 1)
             vals = v[self._pick(len(a))].tolist()  # ← one lookup
             pulse = [
                 nd.animate.set_color(interpolate_color(GREY_C, c, t)).set_opacity(
