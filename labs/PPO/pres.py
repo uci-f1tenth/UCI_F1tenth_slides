@@ -5,6 +5,97 @@ from torch.distributions import Categorical
 
 from labs.PPO.ppo import *
 
+
+class EnvPlayer:
+    """Reusable Manim helper: animate an agent (or manual moves) in a Gym env."""
+
+    ARROWS = {0: ("↑", "Up"), 1: ("→", "Right"), 2: ("↓", "Down"), 3: ("←", "Left")}
+
+    def __init__(self, scene, eid="CliffWalking-v1", w=8):
+        self.sc = scene
+        self.gs = GymScene(eid, w)
+        self.frame = None
+        self.obs = None
+        self.total_reward = 0
+        self.reward_lbl = None
+
+    def reset(self, rt=0.5, show_reward=True):
+        """Reset env, fade in frame. Returns initial obs."""
+        f, o = self.gs.reset()
+        if self.frame is not None:
+            f.match_width(self.frame).move_to(self.frame)
+        self.frame, self.obs, self.total_reward = f, o, 0
+
+        anims = [FadeIn(f)]
+        if show_reward:
+            self.reward_lbl = Text("Reward: 0", font_size=28).to_edge(DOWN, buff=1.2)
+            anims.append(FadeIn(self.reward_lbl))
+        self.sc.play(*anims, run_time=rt)
+        return o
+
+    def step(self, action, rt=0.3, show_arrow=True):
+        """One env step. Returns (old_obs, action, reward, new_obs, done)."""
+        old_obs = self.obs
+        sym, name = self.ARROWS[action]
+
+        arrow = None
+        if show_arrow:
+            arrow = (
+                VGroup(Text(sym, font_size=48), Text(name, font_size=28))
+                .arrange(buff=0.2)
+                .to_edge(DOWN, buff=0.3)
+            )
+            self.sc.play(FadeIn(arrow, shift=UP * 0.2), run_time=rt)
+
+        nf, o, r, done = self.gs.step(action)
+        nf.match_width(self.frame).move_to(self.frame)
+        self.sc.remove(self.frame)
+        self.sc.add(nf)
+        self.frame, self.obs = nf, o
+        self.total_reward += r
+
+        if self.reward_lbl:
+            new_rl = Text(f"Reward: {int(self.total_reward)}", font_size=28).move_to(
+                self.reward_lbl
+            )
+            self.sc.play(FadeTransform(self.reward_lbl, new_rl), run_time=rt)
+            self.reward_lbl = new_rl
+
+        if arrow:
+            self.sc.wait(0.3)
+            self.sc.play(FadeOut(arrow), run_time=rt * 0.6)
+
+        return old_obs, action, r, o, done
+
+    def play_moves(self, moves, **kw):
+        """Animate a list of manual actions."""
+        results = []
+        for m in moves:
+            results.append(self.step(m, **kw))
+        return results
+
+    def play_agent(self, agent, max_steps=60, **kw):
+        """Let the agent's policy choose actions."""
+        results = []
+        for _ in range(max_steps):
+            logits = agent.logits(self.obs)
+            a = Categorical(logits=logits).sample().item()
+            tup = self.step(a, **kw)
+            results.append(tup)
+            if tup[-1]:  # done
+                self.reset(rt=0.2, show_reward=bool(self.reward_lbl))
+        return results
+
+    def fadeout(self, rt=0.3):
+        objs = [o for o in [self.frame, self.reward_lbl] if o is not None]
+        if objs:
+            self.sc.play(*[FadeOut(o) for o in objs], run_time=rt)
+        self.frame = self.reward_lbl = None
+
+    def close(self):
+        self.gs.close()
+
+
 # class Train(Scene):
 #     def construct(self):
 #         ag = PPO(48, 4)
@@ -61,57 +152,15 @@ class Intro(Scene):
         # self.wait()
         # self.play(title.animate.scale(0.5).to_edge(UP))
 
-        # scene = GymScene("CliffWalking-v1")
-        # frame, _ = scene.reset()
-        # self.play(FadeIn(frame), run_time=1.5)
+        # ep = EnvPlayer(self)
+        # ep.reset(show_reward=True)
         # self.wait()
 
-        # move_arrows = {
-        #     0: ("↑", "Up"),
-        #     1: ("→", "Right"),
-        #     2: ("↓", "Down"),
-        #     3: ("←", "Left"),
-        # }
+        # ep.play_moves([0, 3, 1, 1, 1, 2])
 
-        # total_reward = 0
-        # reward_lbl = Text(f"Reward: {total_reward}", font_size=28).to_edge(
-        #     DOWN, buff=1.2
-        # )
-        # self.play(FadeIn(reward_lbl), run_time=0.3)
-
-        # for move in [0, 3, 1, 1, 1, 2]:
-        #     sym, name = move_arrows[move]
-        #     arrow_lbl = (
-        #         VGroup(
-        #             Text(sym, font_size=48),
-        #             Text(name, font_size=28),
-        #         )
-        #         .arrange(buff=0.2)
-        #         .to_edge(DOWN, buff=0.3)
-        #     )
-
-        #     self.play(FadeIn(arrow_lbl, shift=UP * 0.2), run_time=0.3)
-
-        #     new_frame, _, reward, _ = scene.step(move)
-        #     total_reward += reward
-
-        #     self.remove(frame)
-        #     frame = new_frame
-        #     self.add(frame)
-
-        #     new_reward_lbl = Text(f"Reward: {int(total_reward)}", font_size=28).move_to(
-        #         reward_lbl
-        #     )
-        #     self.play(
-        #         FadeTransform(reward_lbl, new_reward_lbl),
-        #         run_time=0.3,
-        #     )
-        #     reward_lbl = new_reward_lbl
-        #     self.wait()
-
-        #     self.play(FadeOut(arrow_lbl), run_time=0.2)
-        # self.play(FadeOut(frame), FadeOut(title), FadeOut(reward_lbl), run_time=1.5)
-        # scene.close()
+        # ep.fadeout()
+        # self.play(FadeOut(title))
+        # ep.close()
 
         # # Part 1: PPO Inference
         # title = TexText("Part 1: PPO Inference", font_size=72)
@@ -257,34 +306,34 @@ class Intro(Scene):
         #     run_time=0.8,
         # )
 
-        # Step 2: Initialize the critic
-        subtitle = TexText("Step 2: Initialize the critic", font_size=48)
-        self.play(Write(subtitle))
-        self.wait()
-        self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
+        # # Step 2: Initialize the critic
+        # subtitle = TexText("Step 2: Initialize the critic", font_size=48)
+        # self.play(Write(subtitle))
+        # self.wait()
+        # self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
 
-        critic_net = ActorViz([48, 64, 64, 1])
-        self.play(FadeIn(critic_net), run_time=1.5)
-        self.wait()
+        # critic_net = ActorViz([48, 64, 64, 1])
+        # self.play(FadeIn(critic_net), run_time=1.5)
+        # self.wait()
 
-        agent = PPO(48, 4)
-        for p in agent.params:
-            p.data.zero_()
+        # agent = PPO(48, 4)
+        # for p in agent.params:
+        #     p.data.zero_()
 
-        critic_acts = get_critic_activations(agent, 0)
-        self.play(critic_net.forward_anim(critic_acts))
-        self.wait()
+        # critic_acts = get_critic_activations(agent, 0)
+        # self.play(critic_net.forward_anim(critic_acts))
+        # self.wait()
 
-        v_label = Tex(r"V(s) = -50").next_to(critic_net.nodes[-1][0], RIGHT, buff=0.2)
-        group = VGroup(v_label, critic_net)
-        self.play(Write(v_label), group.animate.shift(LEFT))
-        self.wait()
+        # v_label = Tex(r"V(s) = -50").next_to(critic_net.nodes[-1][0], RIGHT, buff=0.2)
+        # group = VGroup(v_label, critic_net)
+        # self.play(Write(v_label), group.animate.shift(LEFT))
+        # self.wait()
 
-        self.play(
-            FadeOut(subtitle),
-            FadeOut(group),
-            run_time=0.8,
-        )
+        # self.play(
+        #     FadeOut(subtitle),
+        #     FadeOut(group),
+        #     run_time=0.8,
+        # )
 
         # Step 3: collect a batch of experiences
         subtitle = TexText("Step 3: collect a batch of experiences", font_size=48)
