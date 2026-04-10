@@ -54,9 +54,10 @@ class PPO:
         self.V_θ = mlp([obs_dim, *hidden, 1], 1.0)
         self.params = [*self.π_θ.parameters(), *self.V_θ.parameters()]
         self.opt = torch.optim.Adam(self.params, lr=α, eps=1e-5)
+        self.obs_dim = obs_dim
 
     def enc(self, s):
-        x = torch.zeros(48)
+        x = torch.zeros(self.obs_dim)
         x[int(s)] = 1.0
         return x
 

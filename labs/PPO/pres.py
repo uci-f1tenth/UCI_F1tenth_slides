@@ -5,6 +5,12 @@ from torch.distributions import Categorical
 
 from labs.PPO.ppo import *
 
+gym.register(
+    id="TinyCliffWalking-v0",
+    entry_point="labs.PPO.tiny_cliff:TinyCliffWalkingEnv",
+    max_episode_steps=50,
+)
+
 
 class EnvPlayer:
     """Reusable Manim helper: animate an agent (or manual moves) in a Gym env."""
@@ -336,7 +342,73 @@ class Intro(Scene):
         # )
 
         # Step 3: collect a batch of experiences
-        subtitle = TexText("Step 3: collect a batch of experiences", font_size=48)
+        subtitle = TexText("Step 3: Collect a batch of trajectories", font_size=48)
         self.play(Write(subtitle))
         self.wait()
         self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
+
+        ARROWS = {0: "↑", 1: "→", 2: "↓", 3: "←"}
+        trajectories = [
+            [1],  # a) →           (into cliff)
+            [0, 1, 1, 2],  # b) ↑ → → ↓     (to goal)
+            [3, 0, 1, 1, 2],  # c) ← ↑ → → ↓   (wall then goal)
+        ]
+        xs = [LEFT * 4.5, ORIGIN, RIGHT * 4.5]
+
+        envs = [GymScene("TinyCliffWalking-v0") for _ in range(3)]
+        frames, hdrs, rows, lbls = [], [], [], []
+
+        for i, gs in enumerate(envs):
+            f, _ = gs.reset()
+            f.scale(0.35).move_to(xs[i])
+            frames.append(f)
+
+            l = Text(f"Trajectory {chr(ord('a') + i)}", font_size=20, color=YELLOW)
+            l.next_to(f, UP, buff=0.15)
+            lbls.append(l)
+
+            h = Text(" a     r", font_size=18, font="Monospace", color=GREEN)
+            h.next_to(f, DOWN, buff=0.25)
+            hdrs.append(h)
+            rows.append(VGroup())
+
+        self.play(
+            *[FadeIn(f) for f in frames],
+            *[FadeIn(l) for l in lbls],
+            *[FadeIn(h) for h in hdrs],
+            run_time=0.6,
+        )
+        self.wait(0.5)
+
+        max_steps = max(len(t) for t in trajectories)
+        for step in range(max_steps):
+            step_anims = []
+            for i, traj in enumerate(trajectories):
+                if step >= len(traj):
+                    continue
+                a = traj[step]
+                nf, _, r, done = envs[i].step(a)
+                nf.match_width(frames[i]).move_to(frames[i])
+                self.remove(frames[i])
+                self.add(nf)
+                frames[i] = nf
+
+                row = Text(
+                    f" {ARROWS[a]}   {int(r):>4}",
+                    font_size=18,
+                    font="Monospace",
+                )
+                anchor = hdrs[i] if len(rows[i]) == 0 else rows[i][-1]
+                row.next_to(anchor, DOWN, aligned_edge=LEFT, buff=0.06)
+                rows[i].add(row)
+                step_anims.append(FadeIn(row, shift=UP * 0.1))
+
+            self.play(*step_anims, run_time=0.4)
+            self.wait(0.2)
+
+        self.wait()
+
+        all_objs = [*frames, *lbls, *hdrs, *rows, subtitle]
+        self.play(*[FadeOut(o) for o in all_objs], run_time=0.8)
+        for gs in envs:
+            gs.close()
