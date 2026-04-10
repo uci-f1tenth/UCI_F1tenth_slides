@@ -520,3 +520,102 @@ class Intro(Scene):
             *[mob for traj_mobs in all_rtg_mobs for mob in traj_mobs],
         ]
         self.play(*[FadeOut(m) for m in all_on_screen], run_time=0.8)
+
+        # Step 5: Calculate Advantage
+        subtitle = TexText("Step 5: Calculate Advantage", font_size=48)
+        self.play(Write(subtitle))
+        self.wait()
+        self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
+
+        formula = Tex(
+            r"A(s, a) = Q(s, a) - V(s) \approx \hat{R}_t - V(s)",
+            font_size=32,
+        )
+        v_note = Tex(
+            r"V(s) = -50 \text{ (untrained critic)}", font_size=28, color=YELLOW
+        )
+        form_grp = VGroup(formula, v_note)
+        form_grp.arrange(DOWN, buff=0.12, aligned_edge=LEFT)
+        form_grp.next_to(subtitle, DOWN, buff=0.3)
+
+        self.play(Write(formula))
+        self.wait(0.5)
+        self.play(FadeIn(v_note))
+        self.wait()
+
+        GAM = 0.9
+        V_S = -50.0
+        traj_data = [
+            ("a", ["→"], [-100]),
+            ("b", ["↑", "→", "→", "↓"], [-1, -1, -1, -1]),
+            ("c", ["←", "↑", "→", "→", "↓"], [-1, -1, -1, -1, -1]),
+        ]
+
+        all_rtgs = []
+        for _, _, rews in traj_data:
+            n = len(rews)
+            rtg = [0.0] * n
+            rtg[-1] = float(rews[-1])
+            for i in range(n - 2, -1, -1):
+                rtg[i] = rews[i] + GAM * rtg[i + 1]
+            all_rtgs.append(rtg)
+
+        all_rows = VGroup()
+        all_adv_mobs = []
+
+        for ti, (name, syms, rews) in enumerate(traj_data):
+            lbl = Text(f"{name})", font_size=22, color=YELLOW)
+            step_cols = VGroup()
+            adv_mobs = []
+            rtg_vals = all_rtgs[ti]
+            for si in range(len(syms)):
+                arrow = Text(syms[si], font_size=26)
+                rtg_txt = Text(f"R̂={rtg_vals[si]:.2f}", font_size=14, color=GREY_B)
+                adv_q = Text("?", font_size=16, color=GREEN)
+                col = VGroup(arrow, rtg_txt, adv_q).arrange(DOWN, buff=0.05)
+                step_cols.add(col)
+                adv_mobs.append(adv_q)
+            step_cols.arrange(RIGHT, buff=0.5)
+            row = VGroup(lbl, step_cols).arrange(RIGHT, buff=0.3)
+            all_rows.add(row)
+            all_adv_mobs.append(adv_mobs)
+
+        all_rows.arrange(DOWN, buff=0.25, aligned_edge=LEFT)
+        all_rows.next_to(form_grp, DOWN, buff=0.35)
+
+        self.play(LaggedStartMap(FadeIn, all_rows, lag_ratio=0.2), run_time=0.8)
+        self.wait(0.5)
+
+        for ti, (name, syms, rews) in enumerate(traj_data):
+            rtg_vals = all_rtgs[ti]
+            adv_mobs = all_adv_mobs[ti]
+
+            for i in range(len(syms)):
+                adv = rtg_vals[i] - V_S
+                col_mob = all_rows[ti][1][i]
+                hl = SurroundingRectangle(col_mob, color=YELLOW, buff=0.08)
+
+                calc_str = f"A = {rtg_vals[i]:.2f} - ({int(V_S)}) = {adv:.2f}"
+                calc = Tex(calc_str, font_size=24)
+                calc.to_edge(DOWN, buff=0.4)
+
+                adv_color = GREEN if adv > 0 else RED
+                new_adv = Text(f"{adv:.2f}", font_size=16, color=adv_color)
+                new_adv.move_to(adv_mobs[i])
+
+                self.play(ShowCreation(hl), FadeIn(calc), run_time=0.25)
+                self.play(FadeTransform(adv_mobs[i], new_adv), run_time=0.3)
+                adv_mobs[i] = new_adv
+                self.wait(0.3)
+                self.play(FadeOut(hl), FadeOut(calc), run_time=0.2)
+
+        self.wait()
+
+        all_on_screen = [
+            all_rows,
+            formula,
+            v_note,
+            subtitle,
+            *[mob for traj_mobs in all_adv_mobs for mob in traj_mobs],
+        ]
+        self.play(*[FadeOut(m) for m in all_on_screen], run_time=0.8)
