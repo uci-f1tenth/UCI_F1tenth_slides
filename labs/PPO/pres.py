@@ -5,38 +5,6 @@ from torch.distributions import Categorical
 
 from labs.PPO.ppo import *
 
-
-class ShowActor(Scene):
-    def construct(self):
-        agent = PPO(48, 6)
-        # agent.π_θ.load_state_dict(...)  # optional: load trained weights
-
-        net = ActorViz([48, 64, 64, 4])
-        self.play(FadeIn(net), run_time=1.5)
-        self.wait()
-
-        acts = get_activations(agent, 0)
-        self.play(net.forward_anim(acts))
-
-        self.wait()
-        self.play(net.reset_anim())
-
-
-# class Intro(Scene):
-#     def construct(self):
-#         # Title
-#         title = TexText("PPO: Explained Simply", font_size=72)
-#         self.play(Write(title))
-#         self.wait()
-#         self.play(FadeOut(title))
-
-#         # Part 1: PPO Inference
-#         inference = TexText("PPO Inference", font_size=48).to_edge(UP)
-#         self.play(Write(inference))
-#         self.wait()
-#         self.play(FadeOut(inference))
-
-
 # class Train(Scene):
 #     def construct(self):
 #         ag = PPO(48, 4)
@@ -75,3 +43,30 @@ class ShowActor(Scene):
 
 #         gs.close()
 #         te.close()
+
+
+class Intro(Scene):
+    def construct(self):
+        # Title
+        title = TexText("PPO: Explained Simply", font_size=72)
+        self.play(Write(title))
+        self.wait()
+        self.play(FadeOut(title))
+
+        # Part 0: Dummy environment
+        scene = GymScene("CliffWalking-v1")
+
+        # Part 1: PPO Inference
+        inference = TexText("PPO Inference", font_size=48).to_edge(UP)
+        self.play(Write(inference))
+        self.wait()
+
+        net = ActorViz([48, 64, 64, 4])
+        self.play(FadeIn(net), run_time=1.5)
+        self.wait()
+
+        agent = PPO(48, 4)
+        acts = get_activations(agent, 0)
+        self.play(net.forward_anim(acts))
+        self.wait()
+        self.play(FadeOut(net))
