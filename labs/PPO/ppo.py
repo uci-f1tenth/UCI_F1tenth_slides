@@ -19,20 +19,18 @@ def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
 
 
 def mlp(dims, out_std=0.01):
-    l = []
+    layers = []
     for i in range(len(dims) - 1):
         last = i == len(dims) - 2
-        l.append(
+        layers.append(
             layer_init(
-                nn.Linear(dims[i], dims[i + 1]), std=out_std if last else np.sqrt(2)
+                nn.Linear(dims[i], dims[i + 1]),
+                std=out_std if last else np.sqrt(2),
             )
         )
         if not last:
-            l.append(nn.Tanh())
-    return nn.Sequential(*l)
-
-
-# ── PPO-Clip (Schulman et al., 2017 — arXiv:1707.06347) ────
+            layers.append(nn.Tanh())
+    return nn.Sequential(*layers)
 
 
 class PPO:
@@ -44,16 +42,16 @@ class PPO:
         α=2.5e-4,
         γ=0.99,
         λ=0.95,
-        ε=0.2,  # Table 3
+        ε=0.2,
         c1=0.5,
         c2=0.01,
         K=4,
         M=128,
-    ):  # Eq. 9, Algo 1
+    ):
         self.γ, self.λ, self.ε = γ, λ, ε
         self.c1, self.c2, self.K, self.M = c1, c2, K, M
-        self.π_θ = mlp([obs_dim, *hidden, act_dim], 0.01)  # policy πθ
-        self.V_θ = mlp([obs_dim, *hidden, 1], 1.0)  # value  Vθ
+        self.π_θ = mlp([obs_dim, *hidden, act_dim], 0.01)
+        self.V_θ = mlp([obs_dim, *hidden, 1], 1.0)
         self.params = [*self.π_θ.parameters(), *self.V_θ.parameters()]
         self.opt = torch.optim.Adam(self.params, lr=α, eps=1e-5)
 
@@ -62,7 +60,7 @@ class PPO:
         x[int(s)] = 1.0
         return x
 
-    @torch.no_grad()
+    @torch.inference_mode()
     def logits(self, s):
         return self.π_θ(self.enc(s))
 
@@ -75,9 +73,9 @@ class PPO:
 
     @torch.no_grad()
     def collect(self, env, T):
-        """Algorithm 1: run πθ_old for T steps, compute Ât via GAE (Eq. 11–12)"""
+        """Algorithm 1: run πθ_old for T steps, compute Ât via GAE (Eq. 11–12)"""  # reused in update()
         s, _ = env.reset()
-        S, A, Π, V, R, D = ([] for _ in range(6))
+        S, A, Π, V, R, D = [], [], [], [], [], []
         for _ in range(T):
             s_t = self.enc(s)
             a_t, log_π, _, V_st = self.π_and_V(s_t)
@@ -91,46 +89,40 @@ class PPO:
             if dn or tr:
                 s, _ = env.reset()
 
-        # Eq. 11–12: Ât = δt + (γλ)δt+1 + ⋯ + (γλ)^{T−t+1} δ_{T−1}
         V_t = torch.stack(V)
         r_t = torch.tensor(R, dtype=torch.float32)
         d_t = torch.tensor(D, dtype=torch.float32)
-        V_T = self.V_θ(self.enc(s)).squeeze(-1)  # bootstrap
+        V_T = self.V_θ(self.enc(s)).squeeze(-1)
         Â, gae = torch.zeros_like(r_t), 0.0
         for t in reversed(range(T)):
             V_next = V_T if t == T - 1 else V_t[t + 1]
-            δ = r_t[t] + self.γ * V_next * (1 - d_t[t]) - V_t[t]  # Eq. 12
-            gae = δ + self.γ * self.λ * (1 - d_t[t]) * gae  # Eq. 11
+            δ = r_t[t] + self.γ * V_next * (1 - d_t[t]) - V_t[t]
+            gae = δ + self.γ * self.λ * (1 - d_t[t]) * gae
             Â[t] = gae
-        V_targ = Â + V_t  # Vᵗᵃʳᵍ for L^VF
+        V_targ = Â + V_t
         return torch.stack(S), torch.stack(A), torch.stack(Π), V_t, Â, V_targ
 
     def update(self, data):
         """Optimize L^{CLIP+VF+S}(θ) (Eq. 9) for K epochs, minibatch M"""
         S, A, log_π_old, V_old, Â, V_targ = data
-        for _ in range(self.K):  # K epochs
-            idx = np.arange(len(S))
-            np.random.shuffle(idx)
-            for i in range(0, len(idx), self.M):  # minibatch M
+        Â_n = (Â - Â.mean()) / (Â.std() + 1e-8)
+        for _ in range(self.K):
+            idx = np.random.permutation(len(S))
+            for i in range(0, len(idx), self.M):
                 b = idx[i : i + self.M]
                 _, log_π, S_π, V_θ = self.π_and_V(S[b], A[b])
 
-                # Eq. 6–7: L^CLIP = Ê[min(rₜ·Âₜ, clip(rₜ, 1±ε)·Âₜ)]
-                r_t = (log_π - log_π_old[b]).exp()  # Eq. 6
-                Â_n = (Â[b] - Â[b].mean()) / (Â[b].std() + 1e-8)
+                r_t = (log_π - log_π_old[b]).exp()
                 L_CLIP = torch.min(
-                    r_t * Â_n, r_t.clamp(1 - self.ε, 1 + self.ε) * Â_n
-                ).mean()  # Eq. 7
+                    r_t * Â_n[b], r_t.clamp(1 - self.ε, 1 + self.ε) * Â_n[b]
+                ).mean()
 
-                # L^VF = (Vθ(s) − Vᵗᵃʳᵍ)² with clipping
                 V_c = V_old[b] + (V_θ - V_old[b]).clamp(-self.ε, self.ε)
                 L_VF = (
                     0.5
                     * torch.max((V_θ - V_targ[b]) ** 2, (V_c - V_targ[b]) ** 2).mean()
                 )
 
-                # Eq. 9: maximize  L^CLIP − c₁·L^VF + c₂·S[πθ]
-                #         minimize −L^CLIP + c₁·L^VF − c₂·S[πθ]
                 loss = -L_CLIP + self.c1 * L_VF - self.c2 * S_π.mean()
 
                 self.opt.zero_grad()
