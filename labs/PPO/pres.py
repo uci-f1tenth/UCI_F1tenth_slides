@@ -213,25 +213,81 @@ class Intro(Scene):
         title = TexText("Part 3: Time to train", font_size=72)
         self.play(Write(title))
         self.wait()
-
-        # Step 1: Initialize the agent
         self.play(title.animate.scale(0.5).to_edge(UP))
-        subtitle = TexText("Step 1: Initialize the agent", font_size=48)
+
+        # # Step 1: Initialize the agent
+        # subtitle = TexText("Step 1: Initialize the agent", font_size=48)
+        # self.play(Write(subtitle))
+        # self.wait()
+
+        # self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
+        # # show a 48, 64, 64, 4 net initlized to all zero
+        # net = ActorViz([48, 64, 64, 4])
+        # self.play(FadeIn(net), run_time=1.5)
+        # self.wait()
+
+        # agent = PPO(48, 4)
+        # for p in agent.params:
+        #     p.data.zero_()
+
+        # acts = get_activations(agent, 0)
+        # self.play(net.forward_anim(acts))
+        # self.wait()
+
+        # pct_labels = VGroup(
+        #     *[
+        #         VGroup(
+        #             Text("25%", font_size=18, color=GREEN_D),
+        #             Text(lbl, font_size=18),
+        #         )
+        #         .arrange(RIGHT, buff=0.1)
+        #         .next_to(nd, RIGHT, buff=0.15)
+        #         for nd, lbl in zip(
+        #             net.nodes[-1], ["↑ Up", "→ Right", "↓ Down", "← Left"]
+        #         )
+        #     ]
+        # )
+        # self.play(FadeIn(pct_labels), run_time=1.0)
+        # self.wait()
+
+        # self.play(
+        #     FadeOut(net),
+        #     FadeOut(pct_labels),
+        #     FadeOut(subtitle),
+        #     run_time=0.8,
+        # )
+
+        # Step 2: Initialize the critic
+        subtitle = TexText("Step 2: Initialize the critic", font_size=48)
         self.play(Write(subtitle))
         self.wait()
-
         self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))
-        # show a 48, 64, 64, 4 net initlized to all zero
-        net = ActorViz([48, 64, 64, 4])
-        self.play(FadeIn(net), run_time=1.5)
+
+        critic_net = ActorViz([48, 64, 64, 1])
+        self.play(FadeIn(critic_net), run_time=1.5)
         self.wait()
 
         agent = PPO(48, 4)
         for p in agent.params:
             p.data.zero_()
 
-        acts = get_activations(agent, 0)
-        self.play(net.forward_anim(acts))
+        critic_acts = get_critic_activations(agent, 0)
+        self.play(critic_net.forward_anim(critic_acts))
         self.wait()
 
-        # Step 2: Initialize the critic
+        v_label = Tex(r"V(s) = -50").next_to(critic_net.nodes[-1][0], RIGHT, buff=0.2)
+        group = VGroup(v_label, critic_net)
+        self.play(Write(v_label), group.animate.shift(LEFT))
+        self.wait()
+
+        self.play(
+            FadeOut(subtitle),
+            FadeOut(group),
+            run_time=0.8,
+        )
+
+        # Step 3: collect a batch of experiences
+        subtitle = TexText("Step 3: collect a batch of experiences", font_size=48)
+        self.play(Write(subtitle))
+        self.wait()
+        self.play(subtitle.animate.scale(0.5).next_to(title, DOWN))

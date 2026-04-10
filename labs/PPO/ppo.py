@@ -178,6 +178,17 @@ def get_activations(agent, state):
     return acts
 
 
+def get_critic_activations(agent, state):
+    with torch.inference_mode():
+        x = agent.enc(state)
+        acts = [x.clone()]
+        for i, m in enumerate(agent.V_θ):
+            x = m(x)
+            if isinstance(m, nn.Tanh) or i == len(agent.V_θ) - 1:
+                acts.append(x.clone())
+    return acts
+
+
 class ActorViz(VGroup):
     def __init__(self, arch, show=6, sx=3.0, sy=0.4, r=0.06):
         super().__init__()
