@@ -653,8 +653,6 @@ class Intro(Scene):
             ("c", ["←", "↑", "→", "→", "↓"], [-1, -1, -1, -1, -1]),
         ]
 
-        # Recompute RTGs — take only the FIRST step of each trajectory
-        # (one sample per trajectory, matching "n=3" from the screenshot)
         first_rtgs = []
         for _, _, rews in traj_data:
             n = len(rews)
@@ -664,13 +662,17 @@ class Intro(Scene):
                 rtg[i] = rews[i] + GAM * rtg[i + 1]
             first_rtgs.append(rtg[0])
 
-        # Build table: traj | RTG | V(s) | (RTG - V)^2
+        COL_X = [-4.0, -2.2, -0.4, 1.8]  # traj | R̂ | V(s) | squared error
+
         headers = VGroup(
             Text("traj", font_size=22, color=YELLOW),
             Tex(r"\hat{R}_t", font_size=22, color=YELLOW),
             Tex(r"V(s)", font_size=22, color=YELLOW),
             Tex(r"(\hat{R}_t - V(s))^2", font_size=22, color=YELLOW),
-        ).arrange(RIGHT, buff=0.55)
+        )
+        for hdr, x in zip(headers, COL_X):
+            hdr.set_x(x)
+        headers.set_y(0)
 
         rows_group = VGroup()
         sq_err_vals = []
@@ -681,38 +683,40 @@ class Intro(Scene):
             sq = (rtg - V_S) ** 2
             sq_err_vals.append(sq)
 
-            traj_lbl = Text(f"{name})", font_size=20)
-            rtg_lbl = Text(f"{rtg:.2f}", font_size=20)
-            v_lbl = Text(f"{int(V_S)}", font_size=20)
-            sq_lbl = Text("?", font_size=20, color=GREEN)
+            cells = VGroup(
+                Text(f"{name})", font_size=20),
+                Text(f"{rtg:.2f}", font_size=20),
+                Text(f"{int(V_S)}", font_size=20),
+                Text("?", font_size=20, color=GREEN),
+            )
+            for cell, x in zip(cells, COL_X):
+                cell.set_x(x)
+            rows_group.add(cells)
+            row_mobs.append(cells[3])
 
-            row = VGroup(traj_lbl, rtg_lbl, v_lbl, sq_lbl).arrange(RIGHT, buff=0.55)
-            rows_group.add(row)
-            row_mobs.append(sq_lbl)
-
-        rows_group.arrange(DOWN, buff=0.3, aligned_edge=LEFT)
-
-        first_row = rows_group[0]
-        for cell, hdr in zip(first_row, headers):
-            hdr.set_x(cell.get_x())
-
+        rows_group.arrange(DOWN, buff=0.3)
         for row in rows_group:
-            for cell, hdr in zip(row, headers):
-                cell.set_x(hdr.get_x())
+            for cell, x in zip(row, COL_X):
+                cell.set_x(x)
 
-        table = VGroup(headers, rows_group).arrange(DOWN, buff=0.25, aligned_edge=LEFT)
+        table = VGroup(headers, rows_group).arrange(DOWN, buff=0.25)
+
+        for hdr, x in zip(table[0], COL_X):
+            hdr.set_x(x)
+        for row in table[1]:
+            for cell, x in zip(row, COL_X):
+                cell.set_x(x)
+
         table.next_to(form_grp, DOWN, buff=0.35)
 
         self.play(FadeIn(headers), run_time=0.5)
         self.play(LaggedStartMap(FadeIn, rows_group, lag_ratio=0.2), run_time=0.6)
         self.wait(0.5)
 
-        # Reveal each (RTG - V)^2 term one by one
         for ti in range(len(traj_data)):
             rtg = first_rtgs[ti]
             sq = sq_err_vals[ti]
             row = rows_group[ti]
-            hl = SurroundingRectangle(row, color=YELLOW, buff=0.08)
 
             calc_str = f"({rtg:.2f} - ({int(V_S)}))^2 = ({rtg - V_S:.2f})^2 = {sq:.2f}"
             calc = Tex(calc_str, font_size=24)
@@ -721,15 +725,19 @@ class Intro(Scene):
             new_sq = Text(f"{sq:.2f}", font_size=20, color=GREEN)
             new_sq.move_to(row_mobs[ti])
 
-            self.play(ShowCreation(hl), FadeIn(calc), run_time=0.25)
+            self.play(FadeIn(calc), run_time=0.25)
             self.play(FadeTransform(row_mobs[ti], new_sq), run_time=0.3)
             row_mobs[ti] = new_sq
+
+            # Build a fresh VGroup with the ACTUAL live mobs so the box fits correctly
+            live_row = VGroup(row[0], row[1], row[2], new_sq)
+            hl = SurroundingRectangle(live_row, color=YELLOW, buff=0.1)
+            self.play(ShowCreation(hl), run_time=0.2)
             self.wait(0.3)
             self.play(FadeOut(hl), FadeOut(calc), run_time=0.2)
 
         self.wait(0.4)
 
-        # Final loss = mean of squared errors
         mean_loss = sum(sq_err_vals) / len(sq_err_vals)
         loss_str = (
             r"\text{loss} = \frac{1}{3}("
@@ -739,19 +747,18 @@ class Intro(Scene):
         loss_final = Tex(loss_str, font_size=28, color=BLUE)
         loss_final.to_edge(DOWN, buff=0.5)
 
-        hl_all = SurroundingRectangle(rows_group, color=BLUE, buff=0.1)
+        live_rows = VGroup(
+            *[
+                VGroup(row[0], row[1], row[2], row_mobs[ti])
+                for ti, row in enumerate(rows_group)
+            ]
+        )
+        hl_all = SurroundingRectangle(live_rows, color=BLUE, buff=0.1)
         self.play(ShowCreation(hl_all), run_time=0.3)
         self.play(FadeIn(loss_final), run_time=0.5)
         self.wait()
         self.play(FadeOut(hl_all), run_time=0.2)
         self.wait()
 
-        all_on_screen = [
-            table,
-            formula,
-            legend,
-            subtitle,
-            loss_final,
-            *row_mobs,
-        ]
+        all_on_screen = [table, formula, legend, subtitle, loss_final, *row_mobs]
         self.play(*[FadeOut(m) for m in all_on_screen], run_time=0.8)
