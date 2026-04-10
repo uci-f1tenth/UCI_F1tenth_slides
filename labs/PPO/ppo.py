@@ -142,7 +142,12 @@ class GymScene:
     def _snap(self):
         self.n += 1
         p = f"{self.tmp}/{self.n}.png"
-        Image.fromarray(self.env.render()).save(p)
+        img = Image.fromarray(self.env.render())
+        img = img.resize(
+            (img.width * 8, img.height * 8),
+            resample=Image.NEAREST,
+        )
+        img.save(p)
         return ImageMobject(p).set_width(self.w)
 
     def reset(self):
