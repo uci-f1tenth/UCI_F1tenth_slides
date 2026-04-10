@@ -166,42 +166,103 @@ class GymScene:
         shutil.rmtree(self.tmp, True)
 
 
-# ── Output action viz ────────────────────────────────────────
+# ── Compressed network viz ───────────────────────────────────
 
 
-class ActionViz(VGroup):
-    def __init__(self, labels, r=0.3, gap=1.4):
+def get_activations(agent, state):
+    with torch.inference_mode():
+        x = agent.enc(state)
+        acts = [x.clone()]
+        for i, m in enumerate(agent.π_θ):
+            x = m(x)
+            if isinstance(m, nn.Tanh) or i == len(agent.π_θ) - 1:
+                acts.append(x.clone())
+    return acts
+
+
+class ActorViz(VGroup):
+    def __init__(self, arch, show=6, sx=3.0, sy=0.4, r=0.06):
         super().__init__()
-        self.dots = [
-            Circle(
-                radius=r, stroke_color=WHITE, fill_color=BLUE_E, fill_opacity=0.15
-            ).move_to(i * gap * DOWN)
-            for i in range(len(labels))
-        ]
-        self.add(
-            *self.dots,
-            *[
-                Text(l, font_size=24).next_to(self.dots[i], RIGHT)
-                for i, l in enumerate(labels)
-            ],
-        )
-        self.center()
+        self.show = show
+        self.nodes, self.edges = [], []
+        _e, _d, _n = [], [], []
 
-    def pulse(self, logits, rt=0.15):
-        p = torch.softmax(torch.as_tensor(logits, dtype=torch.float32), 0)
-        p = (p - p.min()) / (p.max() - p.min() + 1e-8)
+        for i, n in enumerate(arch):
+            k, gap = min(n, show), n > show
+            slots = k + gap
+            x = (i - (len(arch) - 1) / 2) * sx
+            col = []
+            for j in range(slots):
+                y = ((slots - 1) / 2 - j) * sy
+                if gap and j == k // 2:
+                    _d.append(Text("⋮", font_size=20, color=GREY_C).move_to([x, y, 0]))
+                    continue
+                nd = Dot(point=[x, y, 0], radius=r, color=GREY_C, fill_opacity=1)
+                col.append(nd)
+                _n.append(nd)
+            self.nodes.append(col)
+            _d.append(
+                Text(str(n), font_size=18, color=GREY_B).move_to(
+                    [x, -(slots - 1) / 2 * sy - 0.5, 0]
+                )
+            )
+
+        for i in range(len(arch) - 1):
+            layer = [
+                Line(
+                    a.get_center(),
+                    b.get_center(),
+                    stroke_width=1.5,
+                    stroke_opacity=0.25,
+                )
+                for a in self.nodes[i]
+                for b in self.nodes[i + 1]
+            ]
+            self.edges.append(layer)
+            _e += layer
+
+        self.add(*_e, *_d, *_n)
+
+    def _pick(self, n):
+        k = min(n, self.show)
+        return np.round(np.linspace(0, n - 1, k)).astype(int)
+
+    def forward_anim(self, acts, pal=(BLUE_D, TEAL, TEAL, GREEN_D)):
+        anims = []
+        for i, (a, col) in enumerate(zip(acts, self.nodes)):
+            c = pal[min(i, len(pal) - 1)]
+            v = a.abs()
+            v = (v - v.min()) / (v.max() - v.min() + 1e-8)
+            vals = v[self._pick(len(a))].tolist()  # ← one lookup
+            pulse = [
+                nd.animate.set_color(interpolate_color(GREY_C, c, t)).set_opacity(
+                    0.4 + 0.6 * t
+                )
+                for nd, t in zip(col, vals)  # ← clean zip
+            ]
+            if i:
+                pulse += [
+                    e.animate.set_stroke(c, 2, opacity=0.5) for e in self.edges[i - 1]
+                ]
+            anims.append(AnimationGroup(*pulse, run_time=0.4))
+            if i:
+                anims.append(
+                    AnimationGroup(
+                        *[
+                            e.animate.set_stroke(GREY_C, 1.5, opacity=0.25)
+                            for e in self.edges[i - 1]
+                        ],
+                        run_time=0.15,
+                    )
+                )
+        return Succession(*anims)
+
+    def reset_anim(self, rt=0.3):
         return AnimationGroup(
             *[
-                self.dots[i].animate.set_fill(
-                    interpolate_color(BLUE_E, YELLOW, p[i].item()),
-                    opacity=0.15 + 0.85 * p[i].item(),
-                )
-                for i in range(len(self.dots))
+                n.animate.set_color(GREY_C).set_opacity(1)
+                for col in self.nodes
+                for n in col
             ],
             run_time=rt,
-        )
-
-    def dim(self, rt=0.08):
-        return AnimationGroup(
-            *[d.animate.set_fill(BLUE_E, opacity=0.15) for d in self.dots], run_time=rt
         )
