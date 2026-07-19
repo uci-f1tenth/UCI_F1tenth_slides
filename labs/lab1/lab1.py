@@ -294,7 +294,7 @@ class WallFollower:
 def make_car(length: float = 0.9) -> ImageMobject:
     car = ImageMobject(str(ASSETS / "car_topview.png"), height=length * CAR_ASPECT)
     car.pose = np.zeros(3)  # x, y, heading
-    car.speed = 0.0
+    car.speed = car.steer = 0.0
     car.base_points = car.get_points().copy()  # origin-centered quad, facing +x
     return car
 
@@ -314,22 +314,27 @@ def place_car(car, x, y, psi=0.0) -> ImageMobject:
     return sync_car(car)
 
 
-def drive_car(car, control, accel: float = None) -> ImageMobject:
+def drive_car(car, control, accel: float = None, steer_rate: float = None) -> ImageMobject:
     """Integrate a unicycle whose (steer, speed) come from control(pose, dt).
-    With accel set, speed ramps toward the command.  Attach after any intro
-    animation on the car, or the sim runs while the sprite is still fading in."""
-    state = {"v": 0.0}
+
+    accel bounds dv/dt and steer_rate bounds d(steer)/dt, like real actuators:
+    when a beam sweeps past a corner and the command jumps, the car ramps
+    instead of teleporting.  Attach after any intro animation on the car, or
+    the sim runs while the sprite is still fading in."""
+
+    def slew(current, cmd, rate, dt):
+        return cmd if rate is None else current + np.clip(cmd - current, -rate * dt, rate * dt)
 
     def update(mob, dt):
         if dt <= 0:
             return
         dt = min(dt, 0.1)
-        steer, v_cmd = control(mob.pose, dt)
-        state["v"] = v_cmd if accel is None else min(state["v"] + accel * dt, v_cmd)
-        mob.speed = state["v"]
-        mob.pose[2] += steer * dt
-        mob.pose[0] += state["v"] * np.cos(mob.pose[2]) * dt
-        mob.pose[1] += state["v"] * np.sin(mob.pose[2]) * dt
+        steer_cmd, v_cmd = control(mob.pose, dt)
+        mob.steer = slew(mob.steer, steer_cmd, steer_rate, dt)
+        mob.speed = slew(mob.speed, v_cmd, accel, dt)
+        mob.pose[2] += mob.steer * dt
+        mob.pose[0] += mob.speed * np.cos(mob.pose[2]) * dt
+        mob.pose[1] += mob.speed * np.sin(mob.pose[2]) * dt
         sync_car(mob)
 
     car.add_updater(update)
@@ -981,7 +986,7 @@ class Lab1(Scene):
                 line.put_start_and_end_on(origin, origin + dist * unit(ang))
             d_tr.set_value(track.meters(ctl.dist))
             alpha_tr.set_value(np.degrees(ctl.alpha))
-            steer_tr.set_value(ctl.steer), speed_tr.set_value(mob.speed)
+            steer_tr.set_value(mob.steer), speed_tr.set_value(mob.speed)
             ang = np.arctan2(mob.pose[1], mob.pose[0])
             lap["wound"] += (ang - lap["prev"] + PI) % TAU - PI
             lap["prev"] = ang
@@ -992,7 +997,7 @@ class Lab1(Scene):
         scenery(car, 0.0)  # place beams before their first visible frame
         self.add(fan, beam_b, beam_a, hit_b, hit_a, tail)
         self.add(hud)  # keep the dashboard above the beams
-        drive_car(car, follower, accel=1.5)
+        drive_car(car, follower, accel=1.5, steer_rate=14.0)
         car.add_updater(scenery)
         self.swap_caption(
             "$\\theta=45^\\circ$, a lookahead, and a PD gain --- exactly the math"
